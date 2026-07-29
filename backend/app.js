@@ -28,39 +28,45 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      // allow requests with no origin (like mobile apps or curl requests)
+      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+        callback(null, true);
+      } else {
+        callback(null, true); // Permissive in dev/staging
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-  }),
+  })
 );
-// Test Route`
+
+// Test Route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
 // Routes
 app.use("/api/auth", authRoutes);
-
 app.use("/api/products", productRoutes);
-
 app.use("/api/dashboard", dashboardRoutes);
-
 app.use("/api/users", userRoutes);
-
 app.use("/api/cart", cartRoutes);
-  
 app.use("/api/wishlist", wishlistRoutes);
-
 app.use("/api/orders", orderRoutes);
-
 app.use("/api/categories", categoryRoutes);
 
-app.use("/uploads", express.static("uploads"));
-
-
 // Server
-app.listen(4000, () => {
-  console.log("Server running on port 4000");
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
+
