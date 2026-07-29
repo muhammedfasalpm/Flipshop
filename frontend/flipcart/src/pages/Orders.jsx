@@ -1,90 +1,130 @@
-import React from "react";
-import { orders } from "../Constant/Product.js";
-
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const Orders = () => {
+  const [orders, setOrders] = useState([]);
 
+  const userInfo = JSON.parse(
+    localStorage.getItem("userInfo")
+  );
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Delivered":
-        return "text-green-600";
-      case "Shipped":
-        return "text-blue-600";
-      case "Processing":
-        return "text-orange-500";
-      default:
-        return "text-gray-600";
+  useEffect(() => {
+    getOrders();
+  }, []);
+
+  const getOrders = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:4000/api/orders/get"
+      );
+
+      // Logged in usernte orders mathram
+      const userOrders = res.data.filter(
+        (order) => order.user._id === userInfo._id
+      );
+
+      setOrders(userOrders);
+    } catch (error) {
+      console.log(error);
     }
   };
 
+  if (!userInfo) {
+    return (
+      <div className="text-center py-20 text-2xl">
+        Please Login First
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100 p-5">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">
+    <div className="bg-gray-100 min-h-screen p-5">
+      <div className="max-w-6xl mx-auto">
+
+        <h1 className="text-3xl font-bold mb-8">
           My Orders
         </h1>
 
-        <div className="space-y-5">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="bg-white rounded-lg shadow p-5"
-            >
-              <div className="flex flex-col md:flex-row gap-5">
+        {orders.length === 0 ? (
+          <div className="text-center text-2xl">
+            No Orders Found
+          </div>
+        ) : (
+          <div className="space-y-6">
 
-                <img
-                  src={order.image}
-                  alt={order.product}
-                  className="w-36 h-36 rounded object-cover"
-                />
+            {orders.map((order) => (
+              <div
+                key={order._id}
+                className="bg-white rounded shadow p-6"
+              >
 
-                <div className="flex-1">
-
-                  <h2 className="text-xl font-semibold">
-                    {order.product}
+                <div className="flex justify-between mb-4">
+                  <h2 className="font-bold">
+                    Order ID:
                   </h2>
 
-                  <p className="text-gray-500 mt-2">
-                    Order ID: {order.id}
-                  </p>
+                  <span>
+                    {order._id}
+                  </span>
+                </div>
 
-                  <p className="text-gray-500">
-                    Order Date: {order.date}
-                  </p>
+                <div className="flex justify-between mb-4">
+                  <h2 className="font-bold">
+                    Status
+                  </h2>
 
-                  <p
-                    className={`font-semibold mt-2 ${getStatusColor(
-                      order.status
-                    )}`}
+                  <span className="text-blue-600">
+                    {order.orderStatus}
+                  </span>
+                </div>
+
+                <div className="flex justify-between mb-4">
+                  <h2 className="font-bold">
+                    Payment
+                  </h2>
+
+                  <span>
+                    {order.paymentMethod}
+                  </span>
+                </div>
+
+                <div className="flex justify-between mb-4">
+                  <h2 className="font-bold">
+                    Total Price
+                  </h2>
+
+                  <span className="text-green-600 font-bold">
+                    ₹{order.totalPrice}
+                  </span>
+                </div>
+
+                <hr className="my-4" />
+
+                <h2 className="font-bold mb-3">
+                  Products
+                </h2>
+
+                {order.items.map((item) => (
+                  <div
+                    key={item._id}
+                    className="flex justify-between mb-2"
                   >
-                    {order.status}
-                  </p>
+                    <span>
+                      {item.product?.name}
+                    </span>
 
-                  <p className="text-green-600 text-xl font-bold mt-2">
-                    ₹{order.amount}
-                  </p>
-
-                </div>
-
-                <div className="flex flex-col gap-3 justify-center">
-
-                  <button className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700">
-                    View Details
-                  </button>
-
-                  {order.status !== "Delivered" && (
-                    <button className="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600">
-                      Cancel Order
-                    </button>
-                  )}
-
-                </div>
+                    <span>
+                      {item.quantity} × ₹
+                      {item.price}
+                    </span>
+                  </div>
+                ))}
 
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+
+          </div>
+        )}
 
       </div>
     </div>

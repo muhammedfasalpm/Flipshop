@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import AdminLayout from "./components/AdminLayout";
 
 const AddProduct = () => {
+  const navigate = useNavigate();
+
+  const [categories, setCategories] = useState([]);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -9,8 +15,26 @@ const AddProduct = () => {
     brand: "",
     price: "",
     stock: "",
-    image: "",
   });
+
+  const [images, setImages] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]);
+
+  useEffect(() => {
+    getCategories();
+  }, []);
+
+  const getCategories = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:4000/api/categories/get"
+      );
+
+      setCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -19,29 +43,67 @@ const AddProduct = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+
+    setImages(files);
+
+    const previews = files.map((file) =>
+      URL.createObjectURL(file)
+    );
+
+    setPreviewImages(previews);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (
+      !formData.name ||
+      !formData.description ||
+      !formData.category ||
+      !formData.brand ||
+      !formData.price ||
+      !formData.stock
+    ) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (images.length === 0) {
+      alert("Please select at least one image");
+      return;
+    }
+
     try {
-      const productData = {
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        brand: formData.brand,
-        price: Number(formData.price),
-        stock: Number(formData.stock),
-        images: [formData.image],
-     
-      };
+      const data = new FormData();
+
+      data.append("name", formData.name);
+      data.append(
+        "description",
+        formData.description
+      );
+      data.append("category", formData.category);
+      data.append("brand", formData.brand);
+      data.append("price", formData.price);
+      data.append("stock", formData.stock);
+
+      images.forEach((image) => {
+        data.append("images", image);
+      });
 
       const res = await axios.post(
         "http://localhost:4000/api/products/add",
-        productData
+        data,
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
       );
 
-      alert("Product Added Successfully");
-
-      console.log(res.data);
+      alert(res.data.message);
 
       setFormData({
         name: "",
@@ -50,19 +112,24 @@ const AddProduct = () => {
         brand: "",
         price: "",
         stock: "",
-        image: "",
       });
 
+      setImages([]);
+      setPreviewImages([]);
+
+      navigate("/admin/products");
     } catch (error) {
       console.log(error);
-      alert("Failed to add product");
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to add product"
+      );
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow p-8">
-
+    return (
+    <AdminLayout>
+      <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow mt-5">
         <h1 className="text-3xl font-bold mb-8">
           Add Product
         </h1>
@@ -71,7 +138,29 @@ const AddProduct = () => {
           onSubmit={handleSubmit}
           className="space-y-5"
         >
+          {/* Category */}
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="w-full border p-3 rounded"
+            required
+          >
+            <option value="">
+              Select Category
+            </option>
 
+            {categories.map((category) => (
+              <option
+                key={category._id}
+                value={category.name}
+              >
+                {category.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Product Name */}
           <input
             type="text"
             name="name"
@@ -82,25 +171,18 @@ const AddProduct = () => {
             required
           />
 
+          {/* Description */}
           <textarea
             name="description"
             placeholder="Description"
+            rows="4"
             value={formData.description}
             onChange={handleChange}
             className="w-full border p-3 rounded"
             required
           />
 
-          <input
-            type="text"
-            name="category"
-            placeholder="Category"
-            value={formData.category}
-            onChange={handleChange}
-            className="w-full border p-3 rounded"
-            required
-          />
-
+          {/* Brand */}
           <input
             type="text"
             name="brand"
@@ -111,6 +193,7 @@ const AddProduct = () => {
             required
           />
 
+          {/* Price */}
           <input
             type="number"
             name="price"
@@ -121,6 +204,7 @@ const AddProduct = () => {
             required
           />
 
+          {/* Stock */}
           <input
             type="number"
             name="stock"
@@ -131,26 +215,41 @@ const AddProduct = () => {
             required
           />
 
+          {/* Images */}
           <input
-            type="text"
-            name="image"
-            placeholder="Image URL"
-            value={formData.image}
-            onChange={handleChange}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageChange}
             className="w-full border p-3 rounded"
-            required
           />
 
+          {/* Image Preview */}
+          {previewImages.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {previewImages.map(
+                (image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt="Preview"
+                    className="h-28 w-full object-cover rounded border"
+                  />
+                )
+              )}
+            </div>
+          )}
+
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-3 rounded"
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold"
           >
             Add Product
           </button>
-
         </form>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

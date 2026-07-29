@@ -1,186 +1,193 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ShieldCheck, ShoppingCart } from "lucide-react";
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState([
-{
-    id: 1,
-    name: "iPhone 15 Pro Max",
-    price: 129999,
-    quantity: 1,
-    image:
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500",
-  },
-  {
-    id: 2,
-    name: "Nike Running Shoes",
-    price: 4999,
-    quantity: 2,
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",
-  },
-  ]);
+  const [cart, setCart] = useState(null);
+  const navigate = useNavigate();
 
-  const increaseQty = (id) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
-    );
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+
+  useEffect(() => {
+    if (userInfo) {
+      getCart();
+    }
+  }, []);
+
+  const getCart = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:4000/api/cart/${userInfo._id}`
+      );
+      setCart(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const decreaseQty = (id) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-    );
+  const updateQuantity = async (productId, quantity) => {
+    if (quantity < 1) return;
+
+    try {
+      await axios.put(`http://localhost:4000/api/cart/update/${productId}`, {
+        userId: userInfo._id,
+        quantity,
+      });
+      getCart();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const removeItem = (id) => {
-    setCartItems(
-      cartItems.filter((item) => item.id !== id)
-    );
+  const removeFromCart = async (productId) => {
+    try {
+      await axios.delete(`http://localhost:4000/api/cart/remove/${productId}`, {
+        data: {
+          userId: userInfo._id,
+        },
+      });
+      getCart();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  if (!userInfo) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-purple-600/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4">
+          <ShoppingBag className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-white font-['Outfit']">Sign In to View Cart</h2>
+        <p className="text-slate-400 text-sm mt-1 mb-6">Please log in to manage your shopping cart items.</p>
+        <Link to="/login" className="btn-primary-gradient px-6 py-3 rounded-xl font-semibold text-sm">
+          Sign In Now
+        </Link>
+      </div>
+    );
+  }
 
-  const shipping = subtotal > 1000 ? 0 : 100;
-
-  const total = subtotal + shipping;
+  if (!cart || !cart.items || cart.items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-[#0f172a]/60 rounded-3xl border border-purple-900/30 my-8 backdrop-blur-md">
+        <div className="w-16 h-16 rounded-2xl bg-purple-600/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4 animate-float">
+          <ShoppingCart className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-white font-['Outfit']">Your Cart is Empty</h2>
+        <p className="text-slate-400 text-sm mt-1 mb-6 max-w-sm">Looks like you haven't added any items to your cart yet.</p>
+        <Link to="/products" className="btn-primary-gradient px-6 py-3 rounded-xl font-semibold text-sm flex items-center gap-2">
+          <span>Start Shopping</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-5">
-      <div className="max-w-7xl mx-auto">
-
-        <h1 className="text-3xl font-bold mb-6">
-          My Cart
+    <div className="space-y-8 pb-12">
+      <div className="flex items-center justify-between p-6 rounded-3xl bg-[#0f172a]/80 border border-purple-900/30 backdrop-blur-md">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] flex items-center gap-3">
+          <ShoppingCart className="w-7 h-7 text-purple-400" />
+          <span>Shopping Cart ({cart.items.length})</span>
         </h1>
+      </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Products List */}
+        <div className="lg:col-span-2 space-y-4">
+          {cart.items.map((item) => (
+            <div
+              key={item.product._id}
+              className="bg-[#0f172a]/90 border border-purple-900/30 p-5 rounded-2xl flex flex-col sm:flex-row gap-5 items-center justify-between backdrop-blur-md shadow-lg"
+            >
+              <img
+                src={
+                  item.product.images?.length > 0
+                    ? (item.product.images[0].startsWith("http")
+                        ? item.product.images[0]
+                        : `http://localhost:4000/${item.product.images[0]}`)
+                    : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&auto=format&fit=crop"
+                }
+                alt={item.product.name}
+                className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl bg-slate-900"
+              />
 
-          {/* Cart Items */}
-          <div className="lg:col-span-2">
+              <div className="flex-1 space-y-1 text-center sm:text-left">
+                <h2 className="text-base font-bold text-white font-['Outfit']">{item.product.name}</h2>
+                <p className="text-blue-400 font-extrabold text-lg">₹{item.price?.toLocaleString()}</p>
 
-            {cartItems.length === 0 ? (
-              <div className="bg-white p-10 rounded shadow text-center">
-                <h2 className="text-2xl font-semibold">
-                  Cart is Empty
-                </h2>
-              </div>
-            ) : (
-              cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded shadow p-4 mb-4 flex flex-col md:flex-row gap-4"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-40 h-40 object-cover rounded"
-                  />
-
-                  <div className="flex-1">
-                    <h2 className="text-xl font-semibold">
-                      {item.name}
-                    </h2>
-
-                    <p className="text-green-600 font-bold mt-2">
-                      ₹{item.price}
-                    </p>
-
-                    {/* Quantity */}
-                    <div className="flex items-center gap-3 mt-4">
-
-                      <button
-                        onClick={() =>
-                          decreaseQty(item.id)
-                        }
-                        className="bg-gray-200 px-3 py-1 rounded"
-                      >
-                        -
-                      </button>
-
-                      <span className="font-bold">
-                        {item.quantity}
-                      </span>
-
-                      <button
-                        onClick={() =>
-                          increaseQty(item.id)
-                        }
-                        className="bg-gray-200 px-3 py-1 rounded"
-                      >
-                        +
-                      </button>
-
-                    </div>
-
+                <div className="flex items-center justify-center sm:justify-start gap-3 pt-2">
+                  <div className="flex items-center rounded-xl bg-slate-900 border border-purple-500/30 p-1">
                     <button
-                      onClick={() =>
-                        removeItem(item.id)
-                      }
-                      className="mt-4 text-red-500 font-semibold"
+                      onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                      aria-label="Decrease"
                     >
-                      Remove
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-
+                    <span className="px-3 font-semibold text-sm text-white">{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                      aria-label="Increase"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
                   </div>
+
+                  <button
+                    onClick={() => removeFromCart(item.product._id)}
+                    className="p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs font-semibold flex items-center gap-1"
+                    title="Remove item"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Remove</span>
+                  </button>
                 </div>
-              ))
-            )}
-
-          </div>
-
-          {/* Price Summary */}
-          <div>
-
-            <div className="bg-white rounded shadow p-5">
-
-              <h2 className="text-2xl font-bold mb-5">
-                Price Details
-              </h2>
-
-              <div className="flex justify-between mb-3">
-                <span>Subtotal</span>
-                <span>₹{subtotal}</span>
               </div>
-
-              <div className="flex justify-between mb-3">
-                <span>Shipping</span>
-                <span>
-                  {shipping === 0
-                    ? "Free"
-                    : `₹${shipping}`}
-                </span>
-              </div>
-
-              <hr className="my-4" />
-
-              <div className="flex justify-between text-xl font-bold">
-                <span>Total</span>
-                <span>₹{total}</span>
-              </div>
-
-              <button className="w-full mt-6 bg-orange-500 text-white py-3 rounded hover:bg-orange-600">
-                Proceed To Checkout
-              </button>
-
             </div>
-
-          </div>
-
+          ))}
         </div>
 
+        {/* Order Summary */}
+        <div className="bg-[#0f172a]/90 p-6 rounded-3xl border border-purple-900/40 shadow-xl h-fit space-y-6 backdrop-blur-md">
+          <h2 className="text-xl font-bold text-white font-['Outfit'] border-b border-purple-900/30 pb-3">
+            Order Summary
+          </h2>
+
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between text-slate-300">
+              <span>Subtotal</span>
+              <span className="font-semibold text-white">₹{cart.totalPrice?.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-slate-300">
+              <span>Shipping</span>
+              <span className="text-emerald-400 font-semibold">FREE</span>
+            </div>
+            <div className="pt-3 border-t border-purple-900/30 flex justify-between text-base font-bold text-white">
+              <span>Total Amount</span>
+              <span className="text-xl text-blue-400 font-['Outfit']">₹{cart.totalPrice?.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate("/checkout")}
+            className="w-full btn-primary-gradient py-3.5 rounded-xl font-semibold text-white text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 hover:shadow-blue-500/40"
+          >
+            <span>Proceed to Checkout</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+
+          <div className="flex items-center gap-2 justify-center text-xs text-slate-400 pt-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Guaranteed Safe & Secure Checkout</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 export default Cart;
+

@@ -1,4 +1,6 @@
+
 import express from "express";
+import upload from "../middleware/upload.js";
 
 import {
   getProducts,
@@ -10,14 +12,31 @@ import {
 
 const router = express.Router();
 
+// Get all products
 router.get("/get", getProducts);
 
+// Get single product
 router.get("/getone/:id", getProduct);
 
-router.post("/add", addProduct);
+// Add product
+router.post(
+  "/add",
+  upload.array("images", 5),
+  addProduct
+);
 
-router.put("/update/:id", updateProduct);
+// Update product
+router.put(
+  "/update/:id",
+  upload.array("images", 5),
+  updateProduct
+);
 
-router.delete("/delete/:id", deleteProduct);
+// Delete product
+router.delete(
+  "/delete/:id",
+  deleteProduct
+);
 
 export default router;
+

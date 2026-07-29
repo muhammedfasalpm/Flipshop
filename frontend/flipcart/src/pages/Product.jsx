@@ -1,24 +1,151 @@
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useSearchParams } from "react-router-dom";
+import ProductCard from "../component/ProductCard";
+import { Search, SlidersHorizontal, PackageX, Sparkles, LayoutGrid, List, X, Tag, Filter, ArrowUpDown } from "lucide-react";
 
-import React, { useState } from "react";
-import { productsData } from "../Constant/Product.js";
-
-
+const sampleProducts = [
+  {
+    _id: "demo-1",
+    name: "Ultra Wireless Noise-Cancelling Headphones",
+    brand: "SonicPro",
+    category: "Audio",
+    price: 12999,
+    rating: 4.9,
+    images: ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop"]
+  },
+  {
+    _id: "demo-2",
+    name: "NextGen Smart Watch Series 7 Pro",
+    brand: "AeroTech",
+    category: "Wearables",
+    price: 8499,
+    rating: 4.8,
+    images: ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop"]
+  },
+  {
+    _id: "demo-3",
+    name: "CyberBook M2 Performance Laptop",
+    brand: "AeroTech",
+    category: "Electronics",
+    price: 89999,
+    rating: 4.9,
+    images: ["https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop"]
+  },
+  {
+    _id: "demo-4",
+    name: "OLED Flagship Smartphone 256GB",
+    brand: "Nova",
+    category: "Mobiles",
+    price: 54999,
+    rating: 4.7,
+    images: ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop"]
+  },
+  {
+    _id: "demo-5",
+    name: "Minimalist Urban Streetwear Hoodie",
+    brand: "VogueStandard",
+    category: "Fashion",
+    price: 3499,
+    rating: 4.6,
+    images: ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop"]
+  },
+  {
+    _id: "demo-6",
+    name: "Ergonomic Mechanical Gaming Keyboard",
+    brand: "SonicPro",
+    category: "Electronics",
+    price: 6999,
+    rating: 4.8,
+    images: ["https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop"]
+  },
+  {
+    _id: "demo-7",
+    name: "Studio Reference Wireless Earbuds",
+    brand: "SonicPro",
+    category: "Audio",
+    price: 5999,
+    rating: 4.7,
+    images: ["https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop"]
+  },
+  {
+    _id: "demo-8",
+    name: "Premium Leather Chronograph Watch",
+    brand: "VogueStandard",
+    category: "Wearables",
+    price: 11499,
+    rating: 4.9,
+    images: ["https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=800&auto=format&fit=crop"]
+  }
+];
 
 const Products = () => {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const searchQuery = searchParams.get("search") || "";
+  const selectedCategory = searchParams.get("category") || "All";
+
+  const [search, setSearch] = useState(searchQuery);
+  const [category, setCategory] = useState(selectedCategory);
   const [sort, setSort] = useState("");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+  const [loading, setLoading] = useState(true);
 
-  let filteredProducts = productsData.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  const availableCategoryPills = ["All", "Electronics", "Mobiles", "Fashion", "Audio", "Wearables"];
 
-    const matchesCategory =
-      category === "All" || product.category === category;
+  useEffect(() => {
+    getProducts();
+    getCategories();
+  }, []);
 
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    if (searchQuery !== undefined) setSearch(searchQuery);
+    if (selectedCategory !== undefined) setCategory(selectedCategory);
+  }, [searchQuery, selectedCategory]);
+
+  const getProducts = async () => {
+    try {
+      const res = await axios.get("http://localhost:4000/api/products/get");
+      if (res.data && res.data.length > 0) {
+        setProducts(res.data);
+      } else {
+        setProducts(sampleProducts);
+      }
+    } catch (error) {
+      console.log("Using sample fallback products");
+      setProducts(sampleProducts);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategories = async () => {
+    try {
+      const res = await axios.get("http://localhost:4000/api/categories/get");
+      if (res.data && res.data.length > 0) {
+        setCategories(res.data);
+      }
+    } catch (error) {
+      console.log("Categories fallback");
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearch("");
+    setCategory("All");
+    setSort("");
+    setSearchParams({});
+  };
+
+  let filteredProducts = [...products];
+
+  filteredProducts = filteredProducts.filter(
+    (product) =>
+      product.name.toLowerCase().includes(search.toLowerCase()) &&
+      (category === "All" || product.category?.toLowerCase() === category.toLowerCase())
+  );
 
   if (sort === "lowToHigh") {
     filteredProducts.sort((a, b) => a.price - b.price);
@@ -29,104 +156,221 @@ const Products = () => {
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen p-5">
-      <div className="max-w-7xl mx-auto">
+    <div className="space-y-6 pb-12">
+      
+      {/* Top Banner & Quick Navigation */}
+      <div className="p-6 sm:p-7 rounded-3xl bg-slate-800/80 border border-slate-700/60 backdrop-blur-xl shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-wider mb-1.5 border border-blue-500/30">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" /> Premium Catalog
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] tracking-tight">
+              {category === "All" ? "Explore All Products" : `${category} Collection`}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 mt-1">
+              Showing {filteredProducts.length} items with fast delivery & guaranteed quality.
+            </p>
+          </div>
 
-        <h1 className="text-3xl font-bold mb-6">
-          All Products
-        </h1>
+          {/* View Mode Toggle Button */}
+          <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-purple-500/30">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                viewMode === "grid"
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
 
-        <div className="grid md:grid-cols-4 gap-6">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                viewMode === "list"
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
+              }`}
+              title="List View"
+            >
+              <List className="w-4 h-4" />
+              <span className="hidden sm:inline">List</span>
+            </button>
+          </div>
+        </div>
 
-          {/* Sidebar */}
-          <div className="bg-white p-4 rounded shadow h-fit">
+        {/* Category Pills Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 border-t border-slate-700/50 pt-4 scrollbar-none">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mr-1">
+            <Tag className="w-3.5 h-3.5 text-purple-400" /> Categories:
+          </span>
+          {availableCategoryPills.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                category.toLowerCase() === cat.toLowerCase()
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md border border-purple-400/40"
+                  : "bg-slate-900/90 text-slate-300 border border-slate-700/60 hover:border-purple-500/40 hover:text-white"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            <h2 className="font-bold text-xl mb-4">
-              Filters
-            </h2>
+      {/* HORIZONTAL PRODUCT SEARCH CONTROLS BAR */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-slate-800/90 border border-slate-700/60 shadow-xl backdrop-blur-xl flex flex-col md:flex-row items-center gap-4">
+        
+        {/* Keyword Search Input */}
+        <div className="relative flex-1 w-full">
+          <input
+            type="text"
+            placeholder="Search products by name or brand..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:border-blue-500 transition-all shadow-inner"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+              title="Clear Search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
-            {/* Search */}
-            <input
-              type="text"
-              placeholder="Search Product..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full border p-2 rounded mb-4"
-            />
-
-            {/* Category */}
+        {/* Horizontal Category Dropdown */}
+        <div className="w-full md:w-48 shrink-0">
+          <div className="relative">
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full border p-2 rounded mb-4"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
             >
-              <option>All</option>
-              <option>Mobiles</option>
-              <option>Fashion</option>
-              <option>Electronics</option>
+              <option value="All">All Categories</option>
+              {categories.length > 0
+                ? categories.map((cat) => (
+                    <option key={cat._id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))
+                : [
+                    <option key="e" value="Electronics">Electronics</option>,
+                    <option key="m" value="Mobiles">Mobiles</option>,
+                    <option key="f" value="Fashion">Fashion</option>,
+                    <option key="a" value="Audio">Audio</option>,
+                    <option key="w" value="Wearables">Wearables</option>
+                  ]}
             </select>
+            <Filter className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
 
-            {/* Sort */}
+        {/* Horizontal Sort Dropdown */}
+        <div className="w-full md:w-48 shrink-0">
+          <div className="relative">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="w-full border p-2 rounded"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
             >
-              <option value="">Sort By</option>
-              <option value="lowToHigh">
-                Price Low To High
-              </option>
-              <option value="highToLow">
-                Price High To Low
-              </option>
+              <option value="">Sort: Featured</option>
+              <option value="lowToHigh">Price: Low → High</option>
+              <option value="highToLow">Price: High → Low</option>
             </select>
-
+            <ArrowUpDown className="w-4 h-4 text-blue-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
-
-          {/* Products Grid */}
-          <div className="md:col-span-3">
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-              {filteredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="bg-white rounded shadow hover:shadow-lg overflow-hidden"
-                >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-56 object-cover"
-                  />
-
-                  <div className="p-4">
-                    <h2 className="font-semibold text-lg">
-                      {product.name}
-                    </h2>
-
-                    <p className="text-gray-500">
-                      {product.category}
-                    </p>
-
-                    <p className="text-green-600 font-bold text-xl mt-2">
-                      ₹{product.price}
-                    </p>
-
-                    <button className="w-full mt-4 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-                      Add To Cart
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-            </div>
-
-          </div>
-
         </div>
+
+        {/* Clear Filters Button */}
+        {(search || category !== "All" || sort) && (
+          <button
+            onClick={clearAllFilters}
+            className="w-full md:w-auto px-4 py-2.5 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:text-white hover:bg-purple-600 transition-all text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap"
+          >
+            <X className="w-3.5 h-3.5" /> Clear Filters
+          </button>
+        )}
+
       </div>
+
+      {/* Active Filter Chips */}
+      {(search || category !== "All" || sort) && (
+        <div className="flex flex-wrap items-center gap-2 bg-slate-800/60 px-5 py-2.5 rounded-2xl border border-slate-700/50 backdrop-blur-md text-xs">
+          <span className="font-bold text-slate-400">Active Tags:</span>
+          
+          {search && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/20 border border-blue-500/40 text-blue-300 font-semibold">
+              Search: "{search}"
+              <button onClick={() => setSearch("")} className="hover:text-white"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+
+          {category !== "All" && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-600/20 border border-purple-500/40 text-purple-300 font-semibold">
+              Category: {category}
+              <button onClick={() => setCategory("All")} className="hover:text-white"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+
+          {sort && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-600/20 border border-pink-500/40 text-pink-300 font-semibold">
+              Sort: {sort === "lowToHigh" ? "Low → High" : "High → Low"}
+              <button onClick={() => setSort("")} className="hover:text-white"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* FULL-WIDTH PRODUCT RESULTS GRID */}
+      <div>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <div className="w-10 h-10 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+            <p className="text-slate-300 text-sm">Loading catalog items...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4 bg-slate-800/60 rounded-3xl border border-slate-700/60 text-center">
+            <PackageX className="w-12 h-12 text-purple-400 mb-3 animate-bounce" />
+            <h3 className="text-xl font-bold text-white font-['Outfit']">No Products Found</h3>
+            <p className="text-slate-300 text-sm mt-1 mb-6">
+              We couldn't find any products matching "{search || category}".
+            </p>
+            <button
+              onClick={clearAllFilters}
+              className="btn-primary-gradient px-5 py-2.5 rounded-xl font-semibold text-xs text-white"
+            >
+              Reset Search Filters
+            </button>
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <ProductCard key={product._id} product={product} viewMode="grid" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredProducts.map((product) => (
+              <ProductCard key={product._id} product={product} viewMode="list" />
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 };
 
 export default Products;
+
+

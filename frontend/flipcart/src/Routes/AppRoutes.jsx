@@ -1,5 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 
+// Layout
+import UserLayout from "../admin/components/UserLayout";
+
+
 // User Pages
 import Home from "../pages/Home";
 import Products from "../pages/Product";
@@ -25,28 +29,29 @@ import ManageCoupons from "../admin/ManageCoupons";
 // Protected Route
 import AdminProtectedRoute from "../admin/components/AdminProtectRoute";
 
-
 const AppRoutes = () => {
   return (
     <Routes>
       {/* **************** User Routes **************** */}
+      <Route element={<UserLayout />}>
+        <Route path="/" element={<Home />} />
 
-      <Route path="/" element={<Home />} />
+        <Route path="/products" element={<Products />} />
 
-      <Route path="/products" element={<Products />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
 
-      <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/cart" element={<Cart />} />
 
-      <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
 
-      <Route path="/checkout" element={<Checkout />} />
+        <Route path="/wishlist" element={<Wishlist />} />
 
-      <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/orders" element={<Orders />} />
 
-      <Route path="/orders" element={<Orders />} />
+        <Route path="/profile" element={<Profile />} />
+      </Route>
 
-      <Route path="/profile" element={<Profile />} />
-
+      {/* Auth Routes */}
       <Route path="/login" element={<Login />} />
 
       <Route path="/register" element={<Register />} />
@@ -102,7 +107,7 @@ const AppRoutes = () => {
         path="/admin/users"
         element={
           <AdminProtectedRoute>
-            <ManageUsers/>
+            <ManageUsers />
           </AdminProtectedRoute>
         }
       />

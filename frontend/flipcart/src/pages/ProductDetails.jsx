@@ -1,43 +1,105 @@
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useParams, useNavigate, Link } from "react-router-dom";
 
 const ProductDetails = () => {
-  const product = {
-    id: 1,
-    name: "iPhone 15 Pro Max",
-    price: 129999,
-    oldPrice: 139999,
-    rating: 4.7,
-    stock: "In Stock",
-    description:
-      "The iPhone 15 Pro Max features a titanium design, A17 Pro chip, advanced camera system, and all-day battery life.",
-  images: [
-    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600",
-    "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=600",
-    "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=600",
-    "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=600",
-  ],
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-    specifications: {
-      Brand: "Apple",
-      Display: "6.7 inch OLED",
-      Processor: "A17 Pro",
-      Storage: "256GB",
-      Camera: "48MP + 12MP + 12MP",
-      Battery: "4441 mAh",
-    },
+  const [product, setProduct] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [selectedImage, setSelectedImage] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const userInfo = JSON.parse(
+    localStorage.getItem("userInfo")
+  );
+
+  useEffect(() => {
+    getProduct();
+    getProducts();
+  }, [id]);
+
+  const getProduct = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:4000/api/products/getone/${id}`
+      );
+
+      setProduct(res.data);
+
+      if (res.data.images?.length > 0) {
+        setSelectedImage(
+          `http://localhost:4000/${res.data.images[0]}`
+        );
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
   };
 
-  const [selectedImage, setSelectedImage] = useState(
-    product.images[0]
-  );
+  const getProducts = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:4000/api/products/get"
+      );
+
+      setProducts(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      if (!userInfo) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      await axios.post(
+        "http://localhost:4000/api/cart/add",
+        {
+          userId: userInfo._id,
+          productId: product._id,
+          quantity: 1,
+        }
+      );
+
+      alert("Added to cart");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="text-center py-20">
+        Product not found
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen p-5">
-      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow p-6">
+      <div className="max-w-7xl mx-auto bg-white p-6 rounded shadow">
 
         <div className="grid md:grid-cols-2 gap-10">
 
-          {/* Images Section */}
+          {/* Images */}
           <div>
 
             <img
@@ -47,99 +109,70 @@ const ProductDetails = () => {
             />
 
             <div className="flex gap-3 mt-4">
-              {product.images.map((image, index) => (
+
+              {product.images?.map((image, index) => (
                 <img
                   key={index}
-                  src={image}
-                  alt="product"
-                  onClick={() => setSelectedImage(image)}
-                  className={`w-20 h-20 border rounded cursor-pointer ${
-                    selectedImage === image
-                      ? "border-blue-600"
-                      : ""
-                  }`}
+                  src={`http://localhost:4000/${image}`}
+                  alt=""
+                  onClick={() =>
+                    setSelectedImage(
+                      `http://localhost:4000/${image}`
+                    )
+                  }
+                  className="w-20 h-20 border rounded cursor-pointer"
                 />
               ))}
+
             </div>
 
           </div>
 
-          {/* Product Info */}
+          {/* Details */}
           <div>
 
             <h1 className="text-3xl font-bold">
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-3 mt-3">
-              <span className="bg-green-600 text-white px-2 py-1 rounded text-sm">
-                ⭐ {product.rating}
-              </span>
+            <p className="text-gray-500 mt-2">
+              {product.category}
+            </p>
 
-              <span className="text-green-600 font-semibold">
-                {product.stock}
-              </span>
-            </div>
+            <p className="text-green-600 text-4xl font-bold mt-5">
+              ₹{product.price}
+            </p>
 
-            <div className="mt-5">
-              <span className="text-4xl font-bold text-green-600">
-                ₹{product.price}
-              </span>
+            <p className="mt-5 text-gray-700">
+              {product.description}
+            </p>
 
-              <span className="ml-4 text-gray-400 line-through text-xl">
-                ₹{product.oldPrice}
-              </span>
-            </div>
+            <div className="mt-6 space-y-2">
+              <p>
+                <strong>Brand:</strong> {product.brand}
+              </p>
 
-            <div className="mt-6">
-              <h2 className="font-bold text-xl mb-2">
-                Description
-              </h2>
-
-              <p className="text-gray-600">
-                {product.description}
+              <p>
+                <strong>Stock:</strong> {product.stock}
               </p>
             </div>
 
             <div className="flex gap-4 mt-8">
 
-              <button className="flex-1 bg-yellow-500 text-white py-3 rounded font-semibold hover:bg-yellow-600">
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 bg-yellow-500 text-white py-3 rounded"
+              >
                 Add To Cart
               </button>
 
-              <button className="flex-1 bg-orange-500 text-white py-3 rounded font-semibold hover:bg-orange-600">
+              <button
+                className="flex-1 bg-orange-500 text-white py-3 rounded"
+              >
                 Buy Now
               </button>
 
             </div>
-
-          </div>
-
-        </div>
-
-        {/* Specifications */}
-        <div className="mt-12">
-
-          <h2 className="text-2xl font-bold mb-5">
-            Specifications
-          </h2>
-
-          <div className="border rounded overflow-hidden">
-
-            {Object.entries(product.specifications).map(
-              ([key, value]) => (
-                <div
-                  key={key}
-                  className="grid grid-cols-2 border-b p-4"
-                >
-                  <div className="font-semibold">
-                    {key}
-                  </div>
-
-                  <div>{value}</div>
-                </div>
-              )
-            )}
 
           </div>
 
@@ -154,32 +187,44 @@ const ProductDetails = () => {
 
           <div className="grid md:grid-cols-4 gap-5">
 
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="bg-white border rounded shadow-sm overflow-hidden"
-              >
-                <img
-                  src="https://via.placeholder.com/250"
-                  alt="related"
-                  className="w-full h-48 object-cover"
-                />
+            {products
+              .filter(
+                (item) => item._id !== product._id
+              )
+              .slice(0, 4)
+              .map((item) => (
+                <div
+                  key={item._id}
+                  className="bg-white border rounded shadow overflow-hidden"
+                >
 
-                <div className="p-4">
-                  <h3 className="font-semibold">
-                    Product {item}
-                  </h3>
+                  <img
+                    src={`http://localhost:4000/${item.images?.[0]}`}
+                    alt={item.name}
+                    className="w-full h-48 object-cover"
+                  />
 
-                  <p className="text-green-600 font-bold mt-2">
-                    ₹9999
-                  </p>
+                  <div className="p-4">
 
-                  <button className="w-full mt-3 bg-blue-600 text-white py-2 rounded">
-                    View Product
-                  </button>
+                    <h3 className="font-semibold">
+                      {item.name}
+                    </h3>
+
+                    <p className="text-green-600 font-bold mt-2">
+                      ₹{item.price}
+                    </p>
+
+                    <Link
+                      to={`/product/${item._id}`}
+                      className="block text-center mt-3 bg-blue-600 text-white py-2 rounded"
+                    >
+                      View Product
+                    </Link>
+
+                  </div>
+
                 </div>
-              </div>
-            ))}
+              ))}
 
           </div>
 
@@ -191,3 +236,4 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+

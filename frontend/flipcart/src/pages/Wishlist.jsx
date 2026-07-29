@@ -1,115 +1,136 @@
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const Wishlist = () => {
-  const [wishlistItems, setWishlistItems] = useState([
-   {
-    id: 1,
-    name: "iPhone 15 Pro Max",
-    price: 129999,
-    image:
-      "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500",
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    name: "Nike Air Max",
-    price: 4999,
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",
-    rating: 4.5,
-  },
-  {
-    id: 3,
-    name: "Samsung Galaxy S24",
-    price: 74999,
-    image:
-      "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500",
-    rating: 4.7,
-  },
-  ]);
+  const [wishlist, setWishlist] = useState([]);
 
-  const removeItem = (id) => {
-    setWishlistItems(
-      wishlistItems.filter((item) => item.id !== id)
+  const userInfo = JSON.parse(
+    localStorage.getItem("userInfo")
+  );
+
+  useEffect(() => {
+    if (userInfo) {
+      getWishlist();
+    }
+  }, []);
+
+  const getWishlist = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:4000/api/wishlist/${userInfo._id}`
+      );
+
+      setWishlist(res.data.products || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const removeFromWishlist = async (
+    productId
+  ) => {
+    try {
+      await axios.delete(
+        `http://localhost:4000/api/wishlist/remove/${productId}`,
+        {
+          data: {
+            userId: userInfo._id,
+          },
+        }
+      );
+
+      getWishlist();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addToCart = async (productId) => {
+    try {
+      await axios.post(
+        "http://localhost:4000/api/cart/add",
+        {
+          userId: userInfo._id,
+          productId,
+          quantity: 1,
+        }
+      );
+
+      alert("Added to cart");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  if (!userInfo) {
+    return (
+      <div className="text-center py-20 text-2xl">
+        Please Login First
+      </div>
     );
-  };
-
-  const moveToCart = (id) => {
-    alert("Product moved to cart");
-    removeItem(id);
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-5">
+    <div className="bg-gray-100 min-h-screen p-5">
+
       <div className="max-w-7xl mx-auto">
 
-        <h1 className="text-3xl font-bold mb-6">
+        <h1 className="text-3xl font-bold mb-8">
           My Wishlist
         </h1>
 
-        {wishlistItems.length === 0 ? (
-          <div className="bg-white p-10 rounded shadow text-center">
-            <h2 className="text-2xl font-semibold">
-              Your Wishlist Is Empty
-            </h2>
-
-            <p className="text-gray-500 mt-2">
-              Add products to your wishlist.
-            </p>
+        {wishlist.length === 0 ? (
+          <div className="text-center text-2xl">
+            Wishlist is Empty
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
 
-            {wishlistItems.map((item) => (
+            {wishlist.map((product) => (
               <div
-                key={item.id}
-                className="bg-white rounded shadow overflow-hidden"
+                key={product._id}
+                className="bg-white rounded shadow p-4"
               >
+
                 <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-60 object-cover"
+                  src={`http://localhost:4000/${product.images?.[0]}`}
+                  alt={product.name}
+                  className="w-full h-60 object-cover rounded"
                 />
 
-                <div className="p-4">
+                <h2 className="text-xl font-bold mt-4">
+                  {product.name}
+                </h2>
 
-                  <h2 className="text-lg font-semibold">
-                    {item.name}
-                  </h2>
+                <p className="text-green-600 font-bold mt-2">
+                  ₹{product.price}
+                </p>
 
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="bg-green-600 text-white px-2 py-1 rounded text-sm">
-                      ⭐ {item.rating}
-                    </span>
-                  </div>
+                <div className="flex gap-3 mt-5">
 
-                  <p className="text-green-600 text-xl font-bold mt-3">
-                    ₹{item.price}
-                  </p>
+                  <button
+                    onClick={() =>
+                      addToCart(product._id)
+                    }
+                    className="flex-1 bg-yellow-500 text-white py-2 rounded"
+                  >
+                    Add To Cart
+                  </button>
 
-                  <div className="flex gap-2 mt-5">
-
-                    <button
-                      onClick={() =>
-                        moveToCart(item.id)
-                      }
-                      className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                    >
-                      Move To Cart
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        removeItem(item.id)
-                      }
-                      className="flex-1 bg-red-500 text-white py-2 rounded hover:bg-red-600"
-                    >
-                      Remove
-                    </button>
-
-                  </div>
+                  <button
+                    onClick={() =>
+                      removeFromWishlist(
+                        product._id
+                      )
+                    }
+                    className="flex-1 bg-red-500 text-white py-2 rounded"
+                  >
+                    Remove
+                  </button>
 
                 </div>
+
               </div>
             ))}
 
@@ -117,8 +138,10 @@ const Wishlist = () => {
         )}
 
       </div>
+
     </div>
   );
 };
 
 export default Wishlist;
+

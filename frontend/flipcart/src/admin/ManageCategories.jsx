@@ -1,100 +1,176 @@
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import AdminLayout from "./components/AdminLayout";
 
 const ManageCategories = () => {
-  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [name, setName] = useState("");
+  const [editId, setEditId] = useState(null);
 
-  const [categories, setCategories] = useState([
-    "Mobiles",
-    "Electronics",
-    "Fashion",
-    "Home",
-    "Beauty",
-  ]);
+  useEffect(() => {
+    getCategories();
+  }, []);
 
-  const addCategory = (e) => {
-    e.preventDefault();
+  const getCategories = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:4000/api/categories/get"
+      );
 
-    if (!category.trim()) return;
-
-    setCategories([...categories, category]);
-    setCategory("");
+      setCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const deleteCategory = (index) => {
-    setCategories(
-      categories.filter((_, i) => i !== index)
-    );
+  const addCategory = async (e) => {
+    e.preventDefault();
+
+    if (!name) {
+      return alert("Enter category name");
+    }
+
+    try {
+      if (editId) {
+        await axios.put(
+          `http://localhost:4000/api/categories/update/${editId}`,
+          {
+            name,
+          }
+        );
+
+        alert("Category updated");
+        setEditId(null);
+      } else {
+        await axios.post(
+          "http://localhost:4000/api/categories/add",
+          {
+            name,
+          }
+        );
+
+        alert("Category added");
+      }
+
+      setName("");
+      getCategories();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    if (!window.confirm("Delete this category?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `http://localhost:4000/api/categories/delete/${id}`
+      );
+
+      getCategories();
+
+      alert("Category deleted");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <AdminLayout>
+      <div className="min-h-screen bg-gray-100 p-6">
 
-      <h1 className="text-3xl font-bold mb-8">
-        Manage Categories
-      </h1>
+        <div className="bg-white rounded shadow p-6">
 
-      {/* Add Category */}
-      <div className="bg-white p-6 rounded shadow mb-8">
+          <h1 className="text-3xl font-bold mb-8">
+            Manage Categories
+          </h1>
 
-        <form
-          onSubmit={addCategory}
-          className="flex gap-4"
-        >
-          <input
-            type="text"
-            placeholder="Enter Category Name"
-            value={category}
-            onChange={(e) =>
-              setCategory(e.target.value)
-            }
-            className="flex-1 border p-3 rounded"
-          />
-
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-6 rounded"
+          {/* Add / Update Category */}
+          <form
+            onSubmit={addCategory}
+            className="flex gap-4 mb-8"
           >
-            Add Category
-          </button>
-        </form>
+            <input
+              type="text"
+              placeholder="Category Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="flex-1 border p-3 rounded"
+            />
 
-      </div>
-
-      {/* Category List */}
-      <div className="bg-white rounded shadow p-6">
-
-        <h2 className="text-2xl font-semibold mb-5">
-          Category List
-        </h2>
-
-        <div className="space-y-4">
-
-          {categories.map((item, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center border-b pb-3"
+            <button
+              className="bg-green-600 text-white px-6 rounded"
             >
-              <h3 className="font-medium">
-                {item}
-              </h3>
+              {editId ? "Update" : "Add"}
+            </button>
+          </form>
 
-              <button
-                onClick={() =>
-                  deleteCategory(index)
-                }
-                className="bg-red-600 text-white px-4 py-2 rounded"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
+          {/* Category Table */}
+          <table className="w-full">
+
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-4">
+                  Category Name
+                </th>
+
+                <th className="p-4">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {categories.map((category) => (
+                <tr
+                  key={category._id}
+                  className="border-b text-center"
+                >
+
+                  <td className="p-4">
+                    {category.name}
+                  </td>
+
+                  <td className="space-x-2">
+
+                    <button
+                      onClick={() => {
+                        setName(category.name);
+                        setEditId(category._id);
+                      }}
+                      className="bg-blue-500 text-white px-4 py-2 rounded"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        deleteCategory(category._id)
+                      }
+                      className="bg-red-500 text-white px-4 py-2 rounded"
+                    >
+                      Delete
+                    </button>
+
+                  </td>
+
+                </tr>
+              ))}
+
+            </tbody>
+
+          </table>
 
         </div>
 
       </div>
-
-    </div>
+    </AdminLayout>
   );
 };
 
 export default ManageCategories;
+

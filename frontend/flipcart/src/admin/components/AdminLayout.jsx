@@ -1,17 +1,21 @@
 import React from "react";
+import AdminNavbar from "./AdminNavbar";
 import AdminSidebar from "./AdminSidebar";
-import AdminNavbar from  "./AdminNavbar";
 
 const AdminLayout = ({ children }) => {
   return (
-    <div className="flex">
+    <div className="min-h-screen bg-gray-100">
 
-      <AdminSidebar/>
+      {/* Fixed Sidebar */}
+      <AdminSidebar />
 
-      <div className="flex-1 bg-gray-100 min-h-screen">
+      {/* Right Side */}
+      <div className="ml-64">
 
-        <AdminNavbar/>
+        {/* Navbar */}
+        <AdminNavbar />
 
+        {/* Page Content */}
         <div className="p-6">
           {children}
         </div>

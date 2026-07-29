@@ -1,125 +1,181 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import AdminLayout from "./components/AdminLayout";
 
 const ManageOrders = () => {
-  const orders = [
-    {
-      id: "ORD123456",
-      customer: "Fasal PK",
-      product: "iPhone 15 Pro Max",
-      amount: 129999,
-      status: "Pending",
-    },
-    {
-      id: "ORD123457",
-      customer: "Rahul",
-      product: "Nike Air Max",
-      amount: 4999,
-      status: "Shipped",
-    },
-    {
-      id: "ORD123458",
-      customer: "Arun",
-      product: "Samsung Galaxy S24",
-      amount: 74999,
-      status: "Delivered",
-    },
-  ];
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    getOrders();
+  }, []);
+
+  const getOrders = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:4000/api/orders/get"
+      );
+
+      setOrders(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateStatus = async (
+    id,
+    orderStatus
+  ) => {
+    try {
+      await axios.put(
+        `http://localhost:4000/api/orders/update/${id}`,
+        {
+          orderStatus,
+        }
+      );
+
+      getOrders();
+
+      alert("Order status updated");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteOrder = async (id) => {
+    if (
+      !window.confirm(
+        "Delete this order?"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `http://localhost:4000/api/orders/delete/${id}`
+      );
+
+      getOrders();
+
+      alert("Order deleted");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <AdminLayout>
+      <div className="min-h-screen bg-gray-100 p-6">
 
-      <h1 className="text-3xl font-bold mb-8">
-        Manage Orders
-      </h1>
+        <h1 className="text-3xl font-bold mb-8">
+          Manage Orders
+        </h1>
 
-      <div className="bg-white rounded shadow overflow-x-auto">
+        <div className="bg-white rounded shadow overflow-x-auto">
 
-        <table className="w-full">
+          <table className="w-full">
 
-          <thead className="bg-gray-200">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-4">
+                  Customer
+                </th>
 
-            <tr>
-              <th className="p-4">Order ID</th>
-              <th className="p-4">Customer</th>
-              <th className="p-4">Product</th>
-              <th className="p-4">Amount</th>
-              <th className="p-4">Status</th>
-              <th className="p-4">Actions</th>
-            </tr>
+                <th className="p-4">
+                  Total
+                </th>
 
-          </thead>
+                <th className="p-4">
+                  Payment
+                </th>
 
-          <tbody>
+                <th className="p-4">
+                  Status
+                </th>
 
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                className="border-b text-center"
-              >
-                <td className="p-4">
-                  {order.id}
-                </td>
-
-                <td className="p-4">
-                  {order.customer}
-                </td>
-
-                <td className="p-4">
-                  {order.product}
-                </td>
-
-                <td className="p-4 text-green-600 font-bold">
-                  ₹{order.amount}
-                </td>
-
-                <td className="p-4">
-
-                  <select
-                    defaultValue={order.status}
-                    className="border p-2 rounded"
-                  >
-                    <option>
-                      Pending
-                    </option>
-
-                    <option>
-                      Processing
-                    </option>
-
-                    <option>
-                      Shipped
-                    </option>
-
-                    <option>
-                      Delivered
-                    </option>
-
-                    <option>
-                      Cancelled
-                    </option>
-
-                  </select>
-
-                </td>
-
-                <td className="p-4">
-
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded">
-                    Update
-                  </button>
-
-                </td>
-
+                <th className="p-4">
+                  Actions
+                </th>
               </tr>
-            ))}
+            </thead>
 
-          </tbody>
+            <tbody>
 
-        </table>
+              {orders.map((order) => (
+                <tr
+                  key={order._id}
+                  className="border-b text-center"
+                >
+                  <td className="p-4">
+                    {order.user?.name}
+                  </td>
+
+                  <td>
+                    ₹{order.totalPrice}
+                  </td>
+
+                  <td>
+                    {order.paymentMethod}
+                  </td>
+
+                  <td>
+                    <select
+                      value={
+                        order.orderStatus
+                      }
+                      onChange={(e) =>
+                        updateStatus(
+                          order._id,
+                          e.target.value
+                        )
+                      }
+                      className="border p-2 rounded"
+                    >
+                      <option>
+                        Pending
+                      </option>
+
+                      <option>
+                        Processing
+                      </option>
+
+                      <option>
+                        Shipped
+                      </option>
+
+                      <option>
+                        Delivered
+                      </option>
+
+                      <option>
+                        Cancelled
+                      </option>
+                    </select>
+                  </td>
+
+                  <td>
+                    <button
+                      onClick={() =>
+                        deleteOrder(
+                          order._id
+                        )
+                      }
+                      className="bg-red-500 text-white px-4 py-2 rounded"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
-
-    </div>
+    </AdminLayout>
   );
 };
 

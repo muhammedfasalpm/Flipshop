@@ -1,5 +1,47 @@
 import mongoose from "mongoose";
 
+const addressSchema = new mongoose.Schema(
+  {
+    fullName: {
+      type: String,
+      default: "",
+    },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    house: {
+      type: String,
+      default: "",
+    },
+
+    city: {
+      type: String,
+      default: "",
+    },
+
+    state: {
+      type: String,
+      default: "",
+    },
+
+    pincode: {
+      type: String,
+      default: "",
+    },
+
+    country: {
+      type: String,
+      default: "India",
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -17,6 +59,7 @@ const userSchema = new mongoose.Schema(
 
     phone: {
       type: String,
+      default: "",
     },
 
     password: {
@@ -28,6 +71,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+
+    image: {
+      type: String,
+      default: "",
+    },
+
+    addresses: [addressSchema],
+
+    isBlocked: {
+      type: Boolean,
+      default: false,
     },
   },
   {

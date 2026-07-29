@@ -1,21 +1,69 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
+import AdminLayout from "./components/AdminLayout";
 
 const EditProduct = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
-  // Temporary dummy data
   const [formData, setFormData] = useState({
-    name: "iPhone 15 Pro Max",
-    description:
-      "The iPhone 15 Pro Max features A17 Pro chip and advanced camera system.",
-    category: "Mobiles",
-    brand: "Apple",
-    price: 129999,
-    stock: 15,
-    image:
-      "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500",
+    name: "",
+    description: "",
+    category: "",
+    brand: "",
+    price: "",
+    stock: "",
   });
+
+  const [images, setImages] = useState([]);
+  const [preview, setPreview] = useState("");
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    getProduct();
+    getCategories();
+  }, []);
+
+  const getProduct = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:4000/api/products/getone/${id}`
+      );
+
+      const product = res.data;
+
+      setFormData({
+        name: product.name,
+        description: product.description,
+        category: product.category,
+        brand: product.brand,
+        price: product.price,
+        stock: product.stock,
+      });
+
+      if (product.images?.length > 0) {
+        setPreview(
+          `http://localhost:4000/${product.images[0]}`
+        );
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getCategories = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:4000/api/categories/get"
+      );
+
+      setCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -24,21 +72,59 @@ const EditProduct = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleImageChange = (e) => {
+    setImages(Array.from(e.target.files));
+
+    if (e.target.files[0]) {
+      setPreview(
+        URL.createObjectURL(e.target.files[0])
+      );
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Updated Product:", id, formData);
+    try {
+      const data = new FormData();
 
-    // Backend connect cheyyumbo:
-    // axios.put(`/api/products/${id}`, formData)
+      data.append("name", formData.name);
+      data.append(
+        "description",
+        formData.description
+      );
+      data.append("category", formData.category);
+      data.append("brand", formData.brand);
+      data.append("price", formData.price);
+      data.append("stock", formData.stock);
 
-    alert("Product Updated Successfully");
+      images.forEach((image) => {
+        data.append("images", image);
+      });
+
+      await axios.put(
+        `http://localhost:4000/api/products/update/${id}`,
+        data,
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
+      );
+
+      alert("Product updated successfully");
+
+      navigate("/admin/products");
+    } catch (error) {
+      console.log(error);
+      alert("Failed to update product");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow p-8">
+    <AdminLayout>
+      <div className="max-w-3xl mx-auto bg-white p-8 rounded shadow">
 
         <h1 className="text-3xl font-bold mb-8">
           Edit Product
@@ -49,124 +135,95 @@ const EditProduct = () => {
           className="space-y-5"
         >
 
-          {/* Name */}
-          <div>
-            <label className="font-semibold">
-              Product Name
-            </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Product Name"
+            className="w-full border p-3 rounded"
+            required
+          />
 
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border p-3 rounded mt-2"
-            />
-          </div>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder="Description"
+            className="w-full border p-3 rounded"
+            required
+          />
 
-          {/* Description */}
-          <div>
-            <label className="font-semibold">
-              Description
-            </label>
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="w-full border p-3 rounded"
+            required
+          >
+            <option value="">
+              Select Category
+            </option>
 
-            <textarea
-              rows="4"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full border p-3 rounded mt-2"
-            />
-          </div>
+            {categories.map((category) => (
+              <option
+                key={category._id}
+                value={category.name}
+              >
+                {category.name}
+              </option>
+            ))}
+          </select>
 
-          {/* Category */}
-          <div>
-            <label className="font-semibold">
-              Category
-            </label>
+          <input
+            type="text"
+            name="brand"
+            value={formData.brand}
+            onChange={handleChange}
+            placeholder="Brand"
+            className="w-full border p-3 rounded"
+            required
+          />
 
-            <input
-              type="text"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full border p-3 rounded mt-2"
-            />
-          </div>
+          <input
+            type="number"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            placeholder="Price"
+            className="w-full border p-3 rounded"
+            required
+          />
 
-          {/* Brand */}
-          <div>
-            <label className="font-semibold">
-              Brand
-            </label>
+          <input
+            type="number"
+            name="stock"
+            value={formData.stock}
+            onChange={handleChange}
+            placeholder="Stock"
+            className="w-full border p-3 rounded"
+            required
+          />
 
-            <input
-              type="text"
-              name="brand"
-              value={formData.brand}
-              onChange={handleChange}
-              className="w-full border p-3 rounded mt-2"
-            />
-          </div>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full border p-3 rounded"
+          />
 
-          {/* Price */}
-          <div>
-            <label className="font-semibold">
-              Price
-            </label>
-
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              className="w-full border p-3 rounded mt-2"
-            />
-          </div>
-
-          {/* Stock */}
-          <div>
-            <label className="font-semibold">
-              Stock
-            </label>
-
-            <input
-              type="number"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              className="w-full border p-3 rounded mt-2"
-            />
-          </div>
-
-          {/* Image */}
-          <div>
-            <label className="font-semibold">
-              Image URL
-            </label>
-
-            <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              className="w-full border p-3 rounded mt-2"
-            />
-          </div>
-
-          {/* Preview */}
-          <div>
+          {preview && (
             <img
-              src={formData.image}
-              alt={formData.name}
+              src={preview}
+              alt="Preview"
               className="w-48 h-48 object-cover rounded border"
             />
-          </div>
+          )}
 
-          {/* Update Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white py-3 rounded"
           >
             Save Changes
           </button>
@@ -174,8 +231,7 @@ const EditProduct = () => {
         </form>
 
       </div>
-
-    </div>
+    </AdminLayout>
   );
 };
 
