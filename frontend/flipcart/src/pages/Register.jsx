@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ShoppingBag, User, Mail, Phone, Lock, UserPlus, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { API_URL } from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -38,9 +39,10 @@ const Register = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:4000/api/auth/register",
+        `${API_URL}/api/auth/register`,
         formData
       );
+
 
       console.log(res.data);
       setSuccessMessage("Account created successfully! Redirecting to login...");

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ShoppingBag, Mail, Lock, LogIn, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { API_URL } from "../services/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,9 +28,10 @@ const Login = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:4000/api/auth/login",
+        `${API_URL}/api/auth/login`,
         formData
       );
+
 
       if (res.data.success) {
         localStorage.setItem("userInfo", JSON.stringify(res.data));

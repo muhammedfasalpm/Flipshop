@@ -3,81 +3,7 @@ import axios from "axios";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../component/ProductCard";
 import { Search, SlidersHorizontal, PackageX, Sparkles, LayoutGrid, List, X, Tag, Filter, ArrowUpDown } from "lucide-react";
-
-const sampleProducts = [
-  {
-    _id: "demo-1",
-    name: "Ultra Wireless Noise-Cancelling Headphones",
-    brand: "SonicPro",
-    category: "Audio",
-    price: 12999,
-    rating: 4.9,
-    images: ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop"]
-  },
-  {
-    _id: "demo-2",
-    name: "NextGen Smart Watch Series 7 Pro",
-    brand: "AeroTech",
-    category: "Wearables",
-    price: 8499,
-    rating: 4.8,
-    images: ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop"]
-  },
-  {
-    _id: "demo-3",
-    name: "CyberBook M2 Performance Laptop",
-    brand: "AeroTech",
-    category: "Electronics",
-    price: 89999,
-    rating: 4.9,
-    images: ["https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop"]
-  },
-  {
-    _id: "demo-4",
-    name: "OLED Flagship Smartphone 256GB",
-    brand: "Nova",
-    category: "Mobiles",
-    price: 54999,
-    rating: 4.7,
-    images: ["https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop"]
-  },
-  {
-    _id: "demo-5",
-    name: "Minimalist Urban Streetwear Hoodie",
-    brand: "VogueStandard",
-    category: "Fashion",
-    price: 3499,
-    rating: 4.6,
-    images: ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop"]
-  },
-  {
-    _id: "demo-6",
-    name: "Ergonomic Mechanical Gaming Keyboard",
-    brand: "SonicPro",
-    category: "Electronics",
-    price: 6999,
-    rating: 4.8,
-    images: ["https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop"]
-  },
-  {
-    _id: "demo-7",
-    name: "Studio Reference Wireless Earbuds",
-    brand: "SonicPro",
-    category: "Audio",
-    price: 5999,
-    rating: 4.7,
-    images: ["https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop"]
-  },
-  {
-    _id: "demo-8",
-    name: "Premium Leather Chronograph Watch",
-    brand: "VogueStandard",
-    category: "Wearables",
-    price: 11499,
-    rating: 4.9,
-    images: ["https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=800&auto=format&fit=crop"]
-  }
-];
+import { API_URL } from "../services/api";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -107,15 +33,11 @@ const Products = () => {
 
   const getProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/products/get");
-      if (res.data && res.data.length > 0) {
-        setProducts(res.data);
-      } else {
-        setProducts(sampleProducts);
-      }
+      const res = await axios.get(`${API_URL}/api/products/get`);
+      setProducts(res.data || []);
     } catch (error) {
-      console.log("Using sample fallback products");
-      setProducts(sampleProducts);
+      console.error("Error fetching products:", error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -123,14 +45,15 @@ const Products = () => {
 
   const getCategories = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/categories/get");
+      const res = await axios.get(`${API_URL}/api/categories/get`);
       if (res.data && res.data.length > 0) {
         setCategories(res.data);
       }
     } catch (error) {
-      console.log("Categories fallback");
+      console.error("Error fetching categories:", error);
     }
   };
+
 
   const clearAllFilters = () => {
     setSearch("");

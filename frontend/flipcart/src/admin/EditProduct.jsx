@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
+import { API_URL, getImageUrl } from "../services/api";
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -29,7 +30,7 @@ const EditProduct = () => {
   const getProduct = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:4000/api/products/getone/${id}`
+        `${API_URL}/api/products/getone/${id}`
       );
 
       const product = res.data;
@@ -44,9 +45,7 @@ const EditProduct = () => {
       });
 
       if (product.images?.length > 0) {
-        setPreview(
-          `http://localhost:4000/${product.images[0]}`
-        );
+        setPreview(getImageUrl(product.images[0]));
       }
     } catch (error) {
       console.log(error);
@@ -56,7 +55,7 @@ const EditProduct = () => {
   const getCategories = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:4000/api/categories/get"
+        `${API_URL}/api/categories/get`
       );
 
       setCategories(res.data);
@@ -103,7 +102,7 @@ const EditProduct = () => {
       });
 
       await axios.put(
-        `http://localhost:4000/api/products/update/${id}`,
+        `${API_URL}/api/products/update/${id}`,
         data,
         {
           headers: {
@@ -112,6 +111,7 @@ const EditProduct = () => {
           },
         }
       );
+
 
       alert("Product updated successfully");
 

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./components/AdminLayout";
+import { API_URL } from "../services/api";
 
 const ManageCategories = () => {
   const [categories, setCategories] = useState([]);
@@ -15,7 +16,7 @@ const ManageCategories = () => {
   const getCategories = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:4000/api/categories/get"
+        `${API_URL}/api/categories/get`
       );
 
       setCategories(res.data);
@@ -34,7 +35,7 @@ const ManageCategories = () => {
     try {
       if (editId) {
         await axios.put(
-          `http://localhost:4000/api/categories/update/${editId}`,
+          `${API_URL}/api/categories/update/${editId}`,
           {
             name,
           }
@@ -44,7 +45,7 @@ const ManageCategories = () => {
         setEditId(null);
       } else {
         await axios.post(
-          "http://localhost:4000/api/categories/add",
+          `${API_URL}/api/categories/add`,
           {
             name,
           }
@@ -67,7 +68,7 @@ const ManageCategories = () => {
 
     try {
       await axios.delete(
-        `http://localhost:4000/api/categories/delete/${id}`
+        `${API_URL}/api/categories/delete/${id}`
       );
 
       getCategories();
@@ -77,6 +78,7 @@ const ManageCategories = () => {
       console.log(error);
     }
   };
+
 
   return (
     <AdminLayout>

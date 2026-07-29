@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
+import { API_URL } from "../services/api";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const AddProduct = () => {
   const getCategories = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:4000/api/categories/get"
+        `${API_URL}/api/categories/get`
       );
 
       setCategories(res.data);
@@ -93,7 +94,7 @@ const AddProduct = () => {
       });
 
       const res = await axios.post(
-        "http://localhost:4000/api/products/add",
+        `${API_URL}/api/products/add`,
         data,
         {
           headers: {
@@ -102,6 +103,7 @@ const AddProduct = () => {
           },
         }
       );
+
 
       alert(res.data.message);
 

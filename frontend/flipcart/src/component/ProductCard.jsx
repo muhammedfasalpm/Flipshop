@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, ShoppingCart, Heart, Eye, ArrowRight, ShieldCheck } from "lucide-react";
+import { getImageUrl } from "../services/api";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -17,11 +18,8 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     // Cart addition logic
   };
 
-  const imageUrl = product.images?.length > 0
-    ? (product.images[0].startsWith("http")
-        ? product.images[0]
-        : `http://localhost:4000/${product.images[0]}`)
-    : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop";
+  const imageUrl = getImageUrl(product?.images?.[0]);
+
 
   if (viewMode === "list") {
     return (

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./components/AdminLayout";
+import { API_URL } from "../services/api";
 
 const ManageOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -12,7 +13,7 @@ const ManageOrders = () => {
   const getOrders = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:4000/api/orders/get"
+        `${API_URL}/api/orders/get`
       );
 
       setOrders(res.data);
@@ -27,7 +28,7 @@ const ManageOrders = () => {
   ) => {
     try {
       await axios.put(
-        `http://localhost:4000/api/orders/update/${id}`,
+        `${API_URL}/api/orders/update/${id}`,
         {
           orderStatus,
         }
@@ -52,7 +53,7 @@ const ManageOrders = () => {
 
     try {
       await axios.delete(
-        `http://localhost:4000/api/orders/delete/${id}`
+        `${API_URL}/api/orders/delete/${id}`
       );
 
       getOrders();
@@ -62,6 +63,7 @@ const ManageOrders = () => {
       console.log(error);
     }
   };
+
 
   return (
     <AdminLayout>

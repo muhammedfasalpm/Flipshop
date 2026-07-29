@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { API_URL, getImageUrl } from "../services/api";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -24,15 +25,13 @@ const ProductDetails = () => {
   const getProduct = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:4000/api/products/getone/${id}`
+        `${API_URL}/api/products/getone/${id}`
       );
 
       setProduct(res.data);
 
       if (res.data.images?.length > 0) {
-        setSelectedImage(
-          `http://localhost:4000/${res.data.images[0]}`
-        );
+        setSelectedImage(getImageUrl(res.data.images[0]));
       }
 
       setLoading(false);
@@ -45,7 +44,7 @@ const ProductDetails = () => {
   const getProducts = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:4000/api/products/get"
+        `${API_URL}/api/products/get`
       );
 
       setProducts(res.data);
@@ -63,7 +62,7 @@ const ProductDetails = () => {
       }
 
       await axios.post(
-        "http://localhost:4000/api/cart/add",
+        `${API_URL}/api/cart/add`,
         {
           userId: userInfo._id,
           productId: product._id,
@@ -79,23 +78,23 @@ const ProductDetails = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-20">
-        Loading...
+      <div className="text-center py-20 text-slate-400 font-medium">
+        Loading product details...
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-20 text-slate-400 font-medium">
         Product not found
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen p-5">
-      <div className="max-w-7xl mx-auto bg-white p-6 rounded shadow">
+    <div className="space-y-8 pb-12">
+      <div className="max-w-7xl mx-auto bg-slate-800/90 p-6 sm:p-8 rounded-3xl border border-slate-700/60 shadow-xl backdrop-blur-md">
 
         <div className="grid md:grid-cols-2 gap-10">
 
@@ -103,24 +102,20 @@ const ProductDetails = () => {
           <div>
 
             <img
-              src={selectedImage}
+              src={selectedImage || getImageUrl(product.images?.[0])}
               alt={product.name}
-              className="w-full h-[500px] object-cover border rounded"
+              className="w-full h-[450px] sm:h-[500px] object-cover border border-slate-700/60 rounded-2xl bg-slate-900"
             />
 
-            <div className="flex gap-3 mt-4">
+            <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
 
               {product.images?.map((image, index) => (
                 <img
                   key={index}
-                  src={`http://localhost:4000/${image}`}
+                  src={getImageUrl(image)}
                   alt=""
-                  onClick={() =>
-                    setSelectedImage(
-                      `http://localhost:4000/${image}`
-                    )
-                  }
-                  className="w-20 h-20 border rounded cursor-pointer"
+                  onClick={() => setSelectedImage(getImageUrl(image))}
+                  className="w-20 h-20 border border-slate-700 rounded-xl cursor-pointer object-cover bg-slate-900 hover:border-purple-400 transition-all"
                 />
               ))}
 
@@ -129,45 +124,46 @@ const ProductDetails = () => {
           </div>
 
           {/* Details */}
-          <div>
+          <div className="space-y-4">
 
-            <h1 className="text-3xl font-bold">
+            <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold uppercase tracking-wider border border-purple-500/30">
+              {product.category || "General"}
+            </span>
+
+            <h1 className="text-3xl font-extrabold text-white font-['Outfit'] mt-2">
               {product.name}
             </h1>
 
-            <p className="text-gray-500 mt-2">
-              {product.category}
+            <p className="text-blue-400 text-3xl font-bold font-['Outfit']">
+              ₹{product.price?.toLocaleString()}
             </p>
 
-            <p className="text-green-600 text-4xl font-bold mt-5">
-              ₹{product.price}
+            <p className="text-slate-300 text-sm leading-relaxed">
+              {product.description || "High-performance quality product with standard warranty."}
             </p>
 
-            <p className="mt-5 text-gray-700">
-              {product.description}
-            </p>
-
-            <div className="mt-6 space-y-2">
+            <div className="pt-4 border-t border-slate-700/60 space-y-2 text-sm text-slate-300">
               <p>
-                <strong>Brand:</strong> {product.brand}
+                <strong className="text-white">Brand:</strong> {product.brand || "FlipShop"}
               </p>
 
               <p>
-                <strong>Stock:</strong> {product.stock}
+                <strong className="text-white">Stock Availability:</strong> {product.stock || 10} units in stock
               </p>
             </div>
 
-            <div className="flex gap-4 mt-8">
+            <div className="flex gap-4 pt-6">
 
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-yellow-500 text-white py-3 rounded"
+                className="flex-1 btn-primary-gradient py-3.5 rounded-xl text-white text-sm font-semibold shadow-lg shadow-purple-600/30"
               >
                 Add To Cart
               </button>
 
               <button
-                className="flex-1 bg-orange-500 text-white py-3 rounded"
+                onClick={handleAddToCart}
+                className="flex-1 bg-slate-900 border border-purple-500/40 text-white py-3.5 rounded-xl text-sm font-semibold hover:border-blue-400 transition-all"
               >
                 Buy Now
               </button>
@@ -179,56 +175,60 @@ const ProductDetails = () => {
         </div>
 
         {/* Related Products */}
-        <div className="mt-12">
+        {products.length > 0 && (
+          <div className="mt-14 pt-8 border-t border-slate-700/60">
 
-          <h2 className="text-2xl font-bold mb-5">
-            Related Products
-          </h2>
+            <h2 className="text-2xl font-bold text-white font-['Outfit'] mb-6">
+              Related Products
+            </h2>
 
-          <div className="grid md:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
 
-            {products
-              .filter(
-                (item) => item._id !== product._id
-              )
-              .slice(0, 4)
-              .map((item) => (
-                <div
-                  key={item._id}
-                  className="bg-white border rounded shadow overflow-hidden"
-                >
+              {products
+                .filter(
+                  (item) => item._id !== product._id
+                )
+                .slice(0, 4)
+                .map((item) => (
+                  <div
+                    key={item._id}
+                    className="bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col justify-between"
+                  >
 
-                  <img
-                    src={`http://localhost:4000/${item.images?.[0]}`}
-                    alt={item.name}
-                    className="w-full h-48 object-cover"
-                  />
+                    <img
+                      src={getImageUrl(item.images?.[0])}
+                      alt={item.name}
+                      className="w-full h-48 object-cover"
+                    />
 
-                  <div className="p-4">
+                    <div className="p-4 flex-1 flex flex-col justify-between">
 
-                    <h3 className="font-semibold">
-                      {item.name}
-                    </h3>
+                      <div>
+                        <h3 className="font-semibold text-white line-clamp-1 font-['Outfit']">
+                          {item.name}
+                        </h3>
 
-                    <p className="text-green-600 font-bold mt-2">
-                      ₹{item.price}
-                    </p>
+                        <p className="text-blue-400 font-bold mt-1 text-sm">
+                          ₹{item.price?.toLocaleString()}
+                        </p>
+                      </div>
 
-                    <Link
-                      to={`/product/${item._id}`}
-                      className="block text-center mt-3 bg-blue-600 text-white py-2 rounded"
-                    >
-                      View Product
-                    </Link>
+                      <Link
+                        to={`/product/${item._id}`}
+                        className="block text-center mt-4 bg-slate-800 hover:bg-slate-700 border border-purple-500/30 text-white py-2 rounded-xl text-xs font-semibold transition-colors"
+                      >
+                        View Product
+                      </Link>
+
+                    </div>
 
                   </div>
+                ))}
 
-                </div>
-              ))}
+            </div>
 
           </div>
-
-        </div>
+        )}
 
       </div>
     </div>
@@ -236,4 +236,5 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+
 

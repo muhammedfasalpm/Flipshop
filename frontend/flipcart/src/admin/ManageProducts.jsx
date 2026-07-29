@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
+import { API_URL, getImageUrl } from "../services/api";
 
 const ManageProducts = () => {
   const [products, setProducts] = useState([]);
@@ -14,7 +15,7 @@ const ManageProducts = () => {
   const getProducts = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:4000/api/products/get"
+        `${API_URL}/api/products/get`
       );
 
       setProducts(res.data);
@@ -34,7 +35,7 @@ const ManageProducts = () => {
 
     try {
       await axios.delete(
-        `http://localhost:4000/api/products/delete/${id}`
+        `${API_URL}/api/products/delete/${id}`
       );
 
       getProducts();
@@ -45,6 +46,7 @@ const ManageProducts = () => {
       alert("Failed to delete product");
     }
   };
+
 
   return (
     <AdminLayout>
@@ -88,10 +90,11 @@ const ManageProducts = () => {
 
                   <td className="p-4">
                     <img
-                      src={`http://localhost:4000/${product.images?.[0]}`}
+                      src={getImageUrl(product.images?.[0])}
                       alt={product.name}
                       className="w-20 h-20 object-cover rounded mx-auto"
                     />
+
                   </td>
 
                   <td>{product.name}</td>

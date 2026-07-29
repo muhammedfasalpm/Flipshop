@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./components/AdminLayout";
+import { API_URL } from "../services/api";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -13,7 +14,7 @@ const ManageUsers = () => {
   const getUsers = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:4000/api/users"
+        `${API_URL}/api/users`
       );
 
       setUsers(res.data);
@@ -31,7 +32,7 @@ const ManageUsers = () => {
 
     try {
       await axios.delete(
-        `http://localhost:4000/api/users/delete/${id}`
+        `${API_URL}/api/users/delete/${id}`
       );
 
       alert("User Deleted Successfully");
@@ -45,7 +46,7 @@ const ManageUsers = () => {
   const handleBlock = async (id) => {
     try {
       await axios.put(
-        `http://localhost:4000/api/users/block/${id}`
+        `${API_URL}/api/users/block/${id}`
       );
 
       getUsers();
@@ -53,6 +54,7 @@ const ManageUsers = () => {
       console.log(error);
     }
   };
+
 
   const filteredUsers = users.filter(
     (user) =>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ShieldCheck, ShoppingCart } from "lucide-react";
+import { API_URL, getImageUrl } from "../services/api";
 
 const Cart = () => {
   const [cart, setCart] = useState(null);
@@ -18,7 +19,7 @@ const Cart = () => {
   const getCart = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:4000/api/cart/${userInfo._id}`
+        `${API_URL}/api/cart/${userInfo._id}`
       );
       setCart(res.data);
     } catch (error) {
@@ -30,7 +31,7 @@ const Cart = () => {
     if (quantity < 1) return;
 
     try {
-      await axios.put(`http://localhost:4000/api/cart/update/${productId}`, {
+      await axios.put(`${API_URL}/api/cart/update/${productId}`, {
         userId: userInfo._id,
         quantity,
       });
@@ -42,7 +43,7 @@ const Cart = () => {
 
   const removeFromCart = async (productId) => {
     try {
-      await axios.delete(`http://localhost:4000/api/cart/remove/${productId}`, {
+      await axios.delete(`${API_URL}/api/cart/remove/${productId}`, {
         data: {
           userId: userInfo._id,
         },
@@ -52,6 +53,7 @@ const Cart = () => {
       console.log(error);
     }
   };
+
 
   if (!userInfo) {
     return (
@@ -102,16 +104,11 @@ const Cart = () => {
               className="bg-[#0f172a]/90 border border-purple-900/30 p-5 rounded-2xl flex flex-col sm:flex-row gap-5 items-center justify-between backdrop-blur-md shadow-lg"
             >
               <img
-                src={
-                  item.product.images?.length > 0
-                    ? (item.product.images[0].startsWith("http")
-                        ? item.product.images[0]
-                        : `http://localhost:4000/${item.product.images[0]}`)
-                    : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&auto=format&fit=crop"
-                }
-                alt={item.product.name}
-                className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl bg-slate-900"
+                src={getImageUrl(item.product?.images?.[0])}
+                alt={item.product?.name || "Product"}
+                className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl bg-slate-900 border border-slate-700/60"
               />
+
 
               <div className="flex-1 space-y-1 text-center sm:text-left">
                 <h2 className="text-base font-bold text-white font-['Outfit']">{item.product.name}</h2>
