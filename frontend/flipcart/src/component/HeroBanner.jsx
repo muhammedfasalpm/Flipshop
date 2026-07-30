@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, ArrowRight, ShieldCheck, Truck } from "lucide-react";
 
@@ -35,9 +35,9 @@ const HeroBanner = () => {
 
   const [current, setCurrent] = useState(0);
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrent((prev) => (prev + 1) % slides.length);
-  };
+  }, [slides.length]);
 
   const prevSlide = () => {
     setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
@@ -48,7 +48,7 @@ const HeroBanner = () => {
       nextSlide();
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [nextSlide]);
 
   return (
     <div className="relative w-full overflow-hidden rounded-3xl border border-purple-900/30 bg-[#0f172a] shadow-2xl my-6">

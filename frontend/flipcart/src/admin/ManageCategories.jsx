@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./components/AdminLayout";
 import { API_URL } from "../services/api";
@@ -8,10 +8,6 @@ const ManageCategories = () => {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
   const [editId, setEditId] = useState(null);
-
-  useEffect(() => {
-    getCategories();
-  }, []);
 
   const getCategories = async () => {
     try {
@@ -24,6 +20,26 @@ const ManageCategories = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/categories/get`
+        );
+        if (!ignore) {
+          setCategories(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCategories();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const addCategory = async (e) => {
     e.preventDefault();

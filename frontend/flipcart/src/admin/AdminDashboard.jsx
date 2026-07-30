@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./components/AdminLayout";
 import { API_URL } from "../services/api";
@@ -13,22 +13,22 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    getDashboardData();
+    let ignore = false;
+    const fetchDashboardData = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/dashboard`);
+        if (!ignore) {
+          setDashboard(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchDashboardData();
+    return () => {
+      ignore = true;
+    };
   }, []);
-
-  const getDashboardData = async () => {
-    try {
-      const res = await axios.get(
-        `${API_URL}/api/dashboard`
-      );
-
-      setDashboard(res.data);
-
-
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   return (
     <AdminLayout>

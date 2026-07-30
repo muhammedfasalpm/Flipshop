@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ShieldCheck, ShoppingCart } from "lucide-react";
@@ -10,13 +10,8 @@ const Cart = () => {
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
 
-  useEffect(() => {
-    if (userInfo) {
-      getCart();
-    }
-  }, []);
-
   const getCart = async () => {
+    if (!userInfo) return;
     try {
       const res = await axios.get(
         `${API_URL}/api/cart/${userInfo._id}`
@@ -26,6 +21,13 @@ const Cart = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    if (userInfo) {
+      getCart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateQuantity = async (productId, quantity) => {
     if (quantity < 1) return;

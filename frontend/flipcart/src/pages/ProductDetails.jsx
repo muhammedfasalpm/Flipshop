@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { API_URL, getImageUrl } from "../services/api";
@@ -14,13 +13,8 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
 
   const userInfo = JSON.parse(
-    localStorage.getItem("userInfo")
+    localStorage.getItem("userInfo") || "null"
   );
-
-  useEffect(() => {
-    getProduct();
-    getProducts();
-  }, [id]);
 
   const getProduct = async () => {
     try {
@@ -52,6 +46,12 @@ const ProductDetails = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    getProduct();
+    getProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleAddToCart = async () => {
     try {

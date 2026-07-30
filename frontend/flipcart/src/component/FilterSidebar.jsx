@@ -1,5 +1,4 @@
-import React from "react";
-import { Filter, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { SlidersHorizontal, RotateCcw } from "lucide-react";
 
 const FilterSidebar = ({
   category,

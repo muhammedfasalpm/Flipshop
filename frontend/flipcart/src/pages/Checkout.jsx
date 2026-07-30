@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { CreditCard, CheckCircle2, MapPin, Truck } from "lucide-react";
@@ -21,13 +21,8 @@ const Checkout = () => {
     pincode: "",
   });
 
-  useEffect(() => {
-    if (userInfo) {
-      getCart();
-    }
-  }, []);
-
   const getCart = async () => {
+    if (!userInfo) return;
     try {
       const res = await axios.get(
         `${API_URL}/api/cart/${userInfo._id}`
@@ -37,6 +32,13 @@ const Checkout = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    if (userInfo) {
+      getCart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (e) => {
     setAddress({

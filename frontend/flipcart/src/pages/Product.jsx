@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../component/ProductCard";
-import { Search, SlidersHorizontal, PackageX, Sparkles, LayoutGrid, List, X, Tag, Filter, ArrowUpDown } from "lucide-react";
+import { Search, PackageX, Sparkles, LayoutGrid, List, X, Tag, Filter, ArrowUpDown } from "lucide-react";
 import { API_URL } from "../services/api";
 
 const Products = () => {
@@ -13,23 +13,13 @@ const Products = () => {
   const searchQuery = searchParams.get("search") || "";
   const selectedCategory = searchParams.get("category") || "All";
 
-  const [search, setSearch] = useState(searchQuery);
-  const [category, setCategory] = useState(selectedCategory);
+  const [search, setSearch] = useState(() => searchQuery);
+  const [category, setCategory] = useState(() => selectedCategory);
   const [sort, setSort] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
   const [loading, setLoading] = useState(true);
 
   const availableCategoryPills = ["All", "Electronics", "Mobiles", "Fashion", "Audio", "Wearables"];
-
-  useEffect(() => {
-    getProducts();
-    getCategories();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery !== undefined) setSearch(searchQuery);
-    if (selectedCategory !== undefined) setCategory(selectedCategory);
-  }, [searchQuery, selectedCategory]);
 
   const getProducts = async () => {
     try {
@@ -53,6 +43,11 @@ const Products = () => {
       console.error("Error fetching categories:", error);
     }
   };
+
+  useEffect(() => {
+    getProducts();
+    getCategories();
+  }, []);
 
 
   const clearAllFilters = () => {

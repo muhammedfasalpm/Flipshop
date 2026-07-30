@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
@@ -22,20 +22,24 @@ const AddProduct = () => {
   const [previewImages, setPreviewImages] = useState([]);
 
   useEffect(() => {
-    getCategories();
+    let ignore = false;
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/categories/get`
+        );
+        if (!ignore) {
+          setCategories(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCategories();
+    return () => {
+      ignore = true;
+    };
   }, []);
-
-  const getCategories = async () => {
-    try {
-      const res = await axios.get(
-        `${API_URL}/api/categories/get`
-      );
-
-      setCategories(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const handleChange = (e) => {
     setFormData((prev) => ({

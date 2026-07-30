@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, Trash2, ArrowRight } from "lucide-react";
@@ -7,21 +7,14 @@ import { API_URL, getImageUrl } from "../services/api";
 
 const Wishlist = () => {
   const [wishlist, setWishlist] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const userInfo = JSON.parse(
     localStorage.getItem("userInfo") || "null"
   );
-
-  useEffect(() => {
-    if (userInfo) {
-      getWishlist();
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  const [loading, setLoading] = useState(Boolean(userInfo));
 
   const getWishlist = async () => {
+    if (!userInfo) return;
     try {
       const res = await axios.get(
         `${API_URL}/api/wishlist/${userInfo._id}`
@@ -33,6 +26,13 @@ const Wishlist = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (userInfo) {
+      getWishlist();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeFromWishlist = async (productId) => {
     try {

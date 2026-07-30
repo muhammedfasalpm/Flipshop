@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./components/AdminLayout";
 import { API_URL } from "../services/api";
@@ -6,10 +6,6 @@ import { API_URL } from "../services/api";
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    getUsers();
-  }, []);
 
   const getUsers = async () => {
     try {
@@ -22,6 +18,26 @@ const ManageUsers = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/users`
+        );
+        if (!ignore) {
+          setUsers(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(

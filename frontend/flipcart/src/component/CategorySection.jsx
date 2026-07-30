@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Laptop, 
@@ -6,7 +5,6 @@ import {
   Shirt, 
   Headphones, 
   Watch, 
-  Sparkles, 
   Tag, 
   Grid 
 } from "lucide-react";

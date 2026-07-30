@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
@@ -23,46 +23,53 @@ const EditProduct = () => {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    getProduct();
-    getCategories();
-  }, []);
+    let ignore = false;
 
-  const getProduct = async () => {
-    try {
-      const res = await axios.get(
-        `${API_URL}/api/products/getone/${id}`
-      );
+    const fetchProduct = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/products/getone/${id}`
+        );
+        if (!ignore) {
+          const product = res.data;
+          setFormData({
+            name: product.name,
+            description: product.description,
+            category: product.category,
+            brand: product.brand,
+            price: product.price,
+            stock: product.stock,
+          });
 
-      const product = res.data;
-
-      setFormData({
-        name: product.name,
-        description: product.description,
-        category: product.category,
-        brand: product.brand,
-        price: product.price,
-        stock: product.stock,
-      });
-
-      if (product.images?.length > 0) {
-        setPreview(getImageUrl(product.images[0]));
+          if (product.images?.length > 0) {
+            setPreview(getImageUrl(product.images[0]));
+          }
+        }
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+    };
 
-  const getCategories = async () => {
-    try {
-      const res = await axios.get(
-        `${API_URL}/api/categories/get`
-      );
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/categories/get`
+        );
+        if (!ignore) {
+          setCategories(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-      setCategories(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+    fetchProduct();
+    fetchCategories();
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({

@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { 
   ShoppingBag, 
@@ -7,7 +6,6 @@ import {
   RefreshCw, 
   Headphones, 
   Send, 
-  Heart,
   Globe,
   Share2,
   MessageSquare,

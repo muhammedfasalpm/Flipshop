@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { User, Mail, Phone, MapPin, Edit3, Save, X, Camera } from "lucide-react";
+import { User, Edit3, Save, X, Camera } from "lucide-react";
 import { API_URL, getImageUrl } from "../services/api";
 
 const Profile = () => {
@@ -9,7 +9,7 @@ const Profile = () => {
     localStorage.getItem("userInfo") || "null"
   );
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(userInfo?._id));
   const [isEditing, setIsEditing] = useState(false);
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState("");
@@ -25,15 +25,8 @@ const Profile = () => {
     country: "India",
   });
 
-  useEffect(() => {
-    if (userInfo?._id) {
-      getProfile();
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
   const getProfile = async () => {
+    if (!userInfo?._id) return;
     try {
       const res = await axios.get(
         `${API_URL}/api/users/profile/${userInfo._id}`
@@ -62,6 +55,13 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (userInfo?._id) {
+      getProfile();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (e) => {
     setUser((prev) => ({

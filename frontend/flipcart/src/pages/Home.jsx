@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { Sparkles, ArrowRight, Flame, Shield, Award, Zap } from "lucide-react";
+import { Sparkles, ArrowRight, Flame } from "lucide-react";
 import { API_URL } from "../services/api";
 
 import HeroSlider from "../component/HeroBanner";
@@ -11,10 +11,6 @@ import ProductGrid from "../component/ProductGrid";
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getProducts();
-  }, []);
 
   const getProducts = async () => {
     try {
@@ -27,6 +23,10 @@ const Home = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    getProducts();
+  }, []);
 
   // Dynamic Categories
   const categories = [

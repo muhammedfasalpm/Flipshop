@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
@@ -7,10 +7,6 @@ import { API_URL, getImageUrl } from "../services/api";
 
 const ManageProducts = () => {
   const [products, setProducts] = useState([]);
-
-  useEffect(() => {
-    getProducts();
-  }, []);
 
   const getProducts = async () => {
     try {
@@ -23,6 +19,26 @@ const ManageProducts = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/products/get`
+        );
+        if (!ignore) {
+          setProducts(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchProducts();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleDelete = async (id) => {
     if (

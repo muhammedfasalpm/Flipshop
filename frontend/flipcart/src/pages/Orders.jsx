@@ -1,26 +1,19 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { Package, Clock, ShoppingBag, ArrowRight } from "lucide-react";
+import { Package, ShoppingBag, ArrowRight } from "lucide-react";
 import { API_URL } from "../services/api";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const userInfo = JSON.parse(
     localStorage.getItem("userInfo") || "null"
   );
-
-  useEffect(() => {
-    if (userInfo) {
-      getOrders();
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  const [loading, setLoading] = useState(Boolean(userInfo));
 
   const getOrders = async () => {
+    if (!userInfo) return;
     try {
       const res = await axios.get(`${API_URL}/api/orders/get`);
       const userOrders = (res.data || []).filter(
@@ -33,6 +26,13 @@ const Orders = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (userInfo) {
+      getOrders();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!userInfo) {
     return (

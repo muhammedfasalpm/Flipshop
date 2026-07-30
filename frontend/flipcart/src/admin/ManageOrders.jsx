@@ -1,14 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./components/AdminLayout";
 import { API_URL } from "../services/api";
 
 const ManageOrders = () => {
   const [orders, setOrders] = useState([]);
-
-  useEffect(() => {
-    getOrders();
-  }, []);
 
   const getOrders = async () => {
     try {
@@ -21,6 +17,26 @@ const ManageOrders = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/orders/get`
+        );
+        if (!ignore) {
+          setOrders(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchOrders();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const updateStatus = async (
     id,
