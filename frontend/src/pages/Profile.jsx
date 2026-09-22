@@ -1,13 +1,9 @@
-
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { User, Edit3, Save, X, Camera } from "lucide-react";
-import { API_URL, getImageUrl } from "../services/api";
+import api, { getImageUrl } from "../services/api";
 
 const Profile = () => {
-  const userInfo = JSON.parse(
-    localStorage.getItem("userInfo") || "null"
-  );
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
 
   const [loading, setLoading] = useState(Boolean(userInfo?._id));
   const [isEditing, setIsEditing] = useState(false);
@@ -28,10 +24,7 @@ const Profile = () => {
   const getProfile = async () => {
     if (!userInfo?._id) return;
     try {
-      const res = await axios.get(
-        `${API_URL}/api/users/profile/${userInfo._id}`
-      );
-
+      const res = await api.get(`/api/users/profile/${userInfo._id}`);
       const data = res.data;
 
       setUser({
@@ -51,7 +44,7 @@ const Profile = () => {
 
       setLoading(false);
     } catch (error) {
-      console.log(error);
+      console.error("Profile fetch error:", error);
       setLoading(false);
     }
   };
@@ -93,24 +86,21 @@ const Profile = () => {
         formData.append("image", image);
       }
 
-      const res = await axios.put(
-        `${API_URL}/api/users/profile/${userInfo._id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const res = await api.put(`/api/users/profile/${userInfo._id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
+      const updatedUser = res.data.user || res.data;
       localStorage.setItem(
         "userInfo",
         JSON.stringify({
           ...userInfo,
-          name: res.data.user.name,
-          email: res.data.user.email,
-          phone: res.data.user.phone,
-          image: res.data.user.image,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          image: updatedUser.image,
         })
       );
 
@@ -118,8 +108,8 @@ const Profile = () => {
       setIsEditing(false);
       getProfile();
     } catch (error) {
-      console.log(error);
-      alert("Failed to update profile");
+      console.error("Save profile error:", error);
+      alert(error.response?.data?.message || "Failed to update profile");
     }
   };
 
@@ -315,5 +305,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-

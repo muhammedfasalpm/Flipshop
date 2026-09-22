@@ -1,35 +1,43 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import { Package, ShoppingBag, ArrowRight } from "lucide-react";
-import { API_URL } from "../services/api";
+import api from "../services/api";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
 
-  const userInfo = JSON.parse(
-    localStorage.getItem("userInfo") || "null"
-  );
-  const [loading, setLoading] = useState(Boolean(userInfo));
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+  const [loading, setLoading] = useState(Boolean(userInfo?._id));
 
   const getOrders = async () => {
-    if (!userInfo) return;
+    if (!userInfo?._id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/orders/get`);
-      const userOrders = (res.data || []).filter(
+      const res = await api.get("/api/orders/get", {
+        params: { userId: userInfo._id },
+      });
+
+      const orderList = res.data.orders || (Array.isArray(res.data) ? res.data : []);
+      const userOrders = orderList.filter(
         (order) => order.user?._id === userInfo._id || order.user === userInfo._id
       );
+
       setOrders(userOrders);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching user orders:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (userInfo) {
+    if (userInfo?._id) {
       getOrders();
+    } else {
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -50,7 +58,7 @@ const Orders = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+    <div className="space-y-8 pb-12">
       <div className="p-6 sm:p-8 rounded-3xl bg-slate-800/80 border border-slate-700/60 backdrop-blur-md flex items-center justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] flex items-center gap-3">

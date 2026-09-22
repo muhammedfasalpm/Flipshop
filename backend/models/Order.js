@@ -46,6 +46,16 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    couponCode: {
+      type: String,
+      default: "",
+    },
+
+    couponDiscount: {
+      type: Number,
+      default: 0,
+    },
+
     orderStatus: {
       type: String,
       enum: [
@@ -62,6 +72,9 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ orderStatus: 1 });
 
 const Order = mongoose.model(
   "Order",

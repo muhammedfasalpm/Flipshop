@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { ShoppingBag, Mail, Lock, LogIn, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
-import { API_URL } from "../services/api";
+import { ShoppingBag, Mail, Lock, LogIn, ArrowRight, ShieldCheck, Sparkles, Smartphone } from "lucide-react";
+import api from "../services/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -10,7 +9,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    email: "",
+    identifier: "",
     password: "",
   });
 
@@ -27,11 +26,12 @@ const Login = () => {
     setErrorMessage("");
 
     try {
-      const res = await axios.post(
-        `${API_URL}/api/auth/login`,
-        formData
-      );
-
+      const res = await api.post("/api/auth/login", {
+        identifier: formData.identifier,
+        email: formData.identifier,
+        phone: formData.identifier,
+        password: formData.password,
+      });
 
       if (res.data.success) {
         localStorage.setItem("userInfo", JSON.stringify(res.data));
@@ -42,7 +42,7 @@ const Login = () => {
         }
       }
     } catch (error) {
-      console.log(error.response?.data);
+      console.log("Login error:", error.response?.data);
       setErrorMessage(
         error.response?.data?.message || "Login failed. Please check your credentials."
       );
@@ -103,19 +103,19 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Email Address
+                Email Address or Mobile Number
               </label>
               <div className="relative">
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="name@example.com"
-                  value={formData.email}
+                  type="text"
+                  name="identifier"
+                  placeholder="name@example.com or 9876543210"
+                  value={formData.identifier}
                   onChange={handleChange}
                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900 border border-purple-500/30 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   required
                 />
-                <Mail className="w-4.5 h-4.5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <Smartphone className="w-4.5 h-4.5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
@@ -167,4 +167,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Login;

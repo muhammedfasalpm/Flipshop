@@ -1,0 +1,19 @@
+# Environment Files
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build & Output
+dist/
+build/
+
+# Uploads & Temporary Media
+uploads/
+backend/uploads/
+
+# Logs
+logs/
+*.log

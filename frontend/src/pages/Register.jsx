@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { ShoppingBag, User, Mail, Phone, Lock, UserPlus, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
-import { API_URL } from "../services/api";
+import api from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -38,19 +37,21 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        `${API_URL}/api/auth/register`,
-        formData
-      );
+      const res = await api.post("/api/auth/register", {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      });
 
-
-      console.log(res.data);
-      setSuccessMessage("Account created successfully! Redirecting to login...");
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      if (res.data.success) {
+        setSuccessMessage("Account created successfully! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
+      }
     } catch (error) {
-      console.log(error.response?.data || error.message);
+      console.error("Register error:", error.response?.data || error.message);
       setErrorMessage(
         error.response?.data?.message || "Registration failed. Please try again."
       );
@@ -221,4 +222,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Register;

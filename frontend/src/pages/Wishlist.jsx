@@ -1,68 +1,65 @@
-
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, Trash2, ArrowRight } from "lucide-react";
-import { API_URL, getImageUrl } from "../services/api";
+import api, { getImageUrl } from "../services/api";
 
 const Wishlist = () => {
   const [wishlist, setWishlist] = useState([]);
 
-  const userInfo = JSON.parse(
-    localStorage.getItem("userInfo") || "null"
-  );
-  const [loading, setLoading] = useState(Boolean(userInfo));
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+  const [loading, setLoading] = useState(Boolean(userInfo?._id));
 
   const getWishlist = async () => {
-    if (!userInfo) return;
+    if (!userInfo?._id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_URL}/api/wishlist/${userInfo._id}`
-      );
+      const res = await api.get(`/api/wishlist/${userInfo._id}`);
       setWishlist(res.data.products || []);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching wishlist:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (userInfo) {
+    if (userInfo?._id) {
       getWishlist();
+    } else {
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const removeFromWishlist = async (productId) => {
+    if (!productId) return;
     try {
-      await axios.delete(
-        `${API_URL}/api/wishlist/remove/${productId}`,
-        {
-          data: {
-            userId: userInfo._id,
-          },
-        }
-      );
+      await api.delete(`/api/wishlist/remove/${productId}`, {
+        data: {
+          userId: userInfo._id,
+        },
+      });
       getWishlist();
     } catch (error) {
-      console.log(error);
+      console.error("Remove from wishlist error:", error);
     }
   };
 
   const addToCart = async (productId) => {
+    if (!productId) return;
     try {
-      await axios.post(
-        `${API_URL}/api/cart/add`,
-        {
-          userId: userInfo._id,
-          productId,
-          quantity: 1,
-        }
-      );
+      await api.post("/api/cart/add", {
+        userId: userInfo._id,
+        productId,
+        quantity: 1,
+      });
       alert("Added to cart");
     } catch (error) {
-      console.log(error);
+      console.error("Add to cart error:", error);
+      alert(error.response?.data?.message || "Failed to add product to cart");
     }
   };
 
@@ -81,13 +78,15 @@ const Wishlist = () => {
     );
   }
 
+  const validWishlistProducts = wishlist.filter((product) => product !== null && product?._id);
+
   return (
     <div className="space-y-8 pb-12">
       <div className="flex items-center justify-between p-6 sm:p-8 rounded-3xl bg-slate-800/80 border border-slate-700/60 backdrop-blur-md">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] flex items-center gap-3">
             <Heart className="w-7 h-7 text-pink-500 fill-pink-500" />
-            <span>My Wishlist ({wishlist.length})</span>
+            <span>My Wishlist ({validWishlistProducts.length})</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1">Your saved favorite items in one place.</p>
         </div>
@@ -97,7 +96,7 @@ const Wishlist = () => {
         <div className="flex justify-center py-20">
           <div className="w-10 h-10 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
         </div>
-      ) : wishlist.length === 0 ? (
+      ) : validWishlistProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-slate-800/60 rounded-3xl border border-slate-700/60 backdrop-blur-md">
           <Heart className="w-12 h-12 text-slate-500 mb-3" />
           <h3 className="text-xl font-bold text-white font-['Outfit']">Your Wishlist is Empty</h3>
@@ -109,7 +108,7 @@ const Wishlist = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {wishlist.map((product) => (
+          {validWishlistProducts.map((product) => (
             <div
               key={product._id}
               className="bg-slate-800/90 rounded-3xl border border-slate-700/60 p-5 flex flex-col justify-between backdrop-blur-md shadow-xl"
@@ -158,5 +157,3 @@ const Wishlist = () => {
 };
 
 export default Wishlist;
-
-

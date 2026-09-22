@@ -1,5 +1,5 @@
-
 import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
 
 import {
   addToWishlist,
@@ -10,22 +10,9 @@ import {
 
 const router = express.Router();
 
-// Add Product to Wishlist
-router.post("/add", addToWishlist);
-
-// Get User Wishlist
-router.get("/:userId", getWishlist);
-
-// Remove Product from Wishlist
-router.delete(
-  "/remove/:productId",
-  removeFromWishlist
-);
-
-// Clear Wishlist
-router.delete(
-  "/clear/:userId",
-  clearWishlist
-);
+router.post("/add", protect, addToWishlist);
+router.get("/:userId", protect, getWishlist);
+router.delete("/remove/:productId", protect, removeFromWishlist);
+router.delete("/clear/:userId", protect, clearWishlist);
 
 export default router;

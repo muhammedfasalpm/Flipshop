@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import { Sparkles, ArrowRight, Flame } from "lucide-react";
-import { API_URL } from "../services/api";
+import api from "../services/api";
 
 import HeroSlider from "../component/HeroBanner";
 import CategorySection from "../component/CategorySection";
@@ -10,29 +9,42 @@ import ProductGrid from "../component/ProductGrid";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const getProducts = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/products/get`);
-      setProducts(res.data || []);
+      const [prodRes, catRes] = await Promise.all([
+        api.get("/api/products/get", { params: { limit: 50 } }),
+        api.get("/api/categories/get"),
+      ]);
+
+      const productList = prodRes.data.products || (Array.isArray(prodRes.data) ? prodRes.data : []);
+      setProducts(productList);
+
+      const categoryList = Array.isArray(catRes.data)
+        ? catRes.data
+        : Array.isArray(catRes.data?.categories)
+        ? catRes.data.categories
+        : [];
+      setCategories(categoryList);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching home data:", error);
       setProducts([]);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    getProducts();
+    fetchData();
   }, []);
 
-  // Dynamic Categories
-  const categories = [
-    ...new Set(products.map((product) => product.category).filter(Boolean)),
+  const productCategories = [
+    ...new Set(products.map((p) => p.category).filter(Boolean)),
   ];
-
 
   return (
     <div className="space-y-10 pb-10">
@@ -40,7 +52,7 @@ const Home = () => {
       {/* Hero Banner */}
       <HeroSlider />
 
-      {/* Categories */}
+      {/* Categories from API */}
       <CategorySection categories={categories} />
 
       {/* Loading Skeleton Indicator */}
@@ -75,7 +87,7 @@ const Home = () => {
 
       {/* Category Wise Products */}
       {!loading &&
-        categories.map((category) => {
+        productCategories.map((category) => {
           const categoryProducts = products.filter(
             (product) => product.category === category
           );
@@ -116,4 +128,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Home;

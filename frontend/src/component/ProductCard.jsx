@@ -35,7 +35,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
             <Heart className={`w-4 h-4 ${isWishlisted ? "text-red-500 fill-red-500" : ""}`} />
           </button>
 
-          {product?.rating && (
+          {Boolean(product?.rating) && (
             <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-950/80 border border-amber-500/30 text-amber-400 text-xs font-semibold backdrop-blur-md">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>{product.rating}</span>
@@ -122,7 +122,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
         </button>
 
         {/* Rating Badge */}
-        {product?.rating && (
+        {Boolean(product?.rating) && (
           <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-950/80 border border-amber-500/30 text-amber-400 text-xs font-semibold backdrop-blur-md">
             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
             <span>{product.rating}</span>

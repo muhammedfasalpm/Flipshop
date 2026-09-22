@@ -1,17 +1,19 @@
-
 import { Navigate } from "react-router-dom";
 
 const AdminProtectedRoute = ({ children }) => {
-  // Temporary dummy admin data
-  const user = {
-    role: "admin",
-  };
+  let user = null;
 
-  // Backend connect cheyyumbo localStorage/context-il ninn varum
-  // const user = JSON.parse(localStorage.getItem("userInfo"));
+  try {
+    const userInfoStr = localStorage.getItem("userInfo");
+    if (userInfoStr) {
+      user = JSON.parse(userInfoStr);
+    }
+  } catch (error) {
+    console.error("Error reading userInfo in AdminProtectedRoute:", error);
+  }
 
-  if (!user || user.role !== "admin") {
-    return <Navigate to="/login" />;
+  if (!user || user.role !== "admin" || !user.token) {
+    return <Navigate to="/login" replace />;
   }
 
   return children;

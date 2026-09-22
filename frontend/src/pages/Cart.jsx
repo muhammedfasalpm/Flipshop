@@ -1,61 +1,67 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ShieldCheck, ShoppingCart } from "lucide-react";
-import { API_URL, getImageUrl } from "../services/api";
+import api, { getImageUrl } from "../services/api";
 
 const Cart = () => {
   const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
 
   const getCart = async () => {
-    if (!userInfo) return;
+    if (!userInfo?._id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_URL}/api/cart/${userInfo._id}`
-      );
+      const res = await api.get(`/api/cart/${userInfo._id}`);
       setCart(res.data);
     } catch (error) {
-      console.log(error);
+      console.error("Cart fetch error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (userInfo) {
+    if (userInfo?._id) {
       getCart();
+    } else {
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateQuantity = async (productId, quantity) => {
-    if (quantity < 1) return;
+    if (quantity < 1 || !productId) return;
 
     try {
-      await axios.put(`${API_URL}/api/cart/update/${productId}`, {
+      await api.put(`/api/cart/update/${productId}`, {
         userId: userInfo._id,
         quantity,
       });
       getCart();
     } catch (error) {
-      console.log(error);
+      console.error("Update quantity error:", error);
     }
   };
 
   const removeFromCart = async (productId) => {
+    if (!productId) return;
     try {
-      await axios.delete(`${API_URL}/api/cart/remove/${productId}`, {
+      await api.delete(`/api/cart/remove/${productId}`, {
         data: {
           userId: userInfo._id,
         },
       });
       getCart();
     } catch (error) {
-      console.log(error);
+      console.error("Remove from cart error:", error);
     }
   };
-
 
   if (!userInfo) {
     return (
@@ -72,7 +78,17 @@ const Cart = () => {
     );
   }
 
-  if (!cart || !cart.items || cart.items.length === 0) {
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="w-10 h-10 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const validCartItems = (cart?.items || []).filter((item) => item && item.product);
+
+  if (!cart || validCartItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-[#0f172a]/60 rounded-3xl border border-purple-900/30 my-8 backdrop-blur-md">
         <div className="w-16 h-16 rounded-2xl bg-purple-600/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4 animate-float">
@@ -93,28 +109,27 @@ const Cart = () => {
       <div className="flex items-center justify-between p-6 rounded-3xl bg-[#0f172a]/80 border border-purple-900/30 backdrop-blur-md">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] flex items-center gap-3">
           <ShoppingCart className="w-7 h-7 text-purple-400" />
-          <span>Shopping Cart ({cart.items.length})</span>
+          <span>Shopping Cart ({validCartItems.length})</span>
         </h1>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Products List */}
         <div className="lg:col-span-2 space-y-4">
-          {cart.items.map((item) => (
+          {validCartItems.map((item) => (
             <div
               key={item.product._id}
               className="bg-[#0f172a]/90 border border-purple-900/30 p-5 rounded-2xl flex flex-col sm:flex-row gap-5 items-center justify-between backdrop-blur-md shadow-lg"
             >
               <img
-                src={getImageUrl(item.product?.images?.[0])}
-                alt={item.product?.name || "Product"}
+                src={getImageUrl(item.product.images?.[0])}
+                alt={item.product.name || "Product"}
                 className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl bg-slate-900 border border-slate-700/60"
               />
 
-
               <div className="flex-1 space-y-1 text-center sm:text-left">
                 <h2 className="text-base font-bold text-white font-['Outfit']">{item.product.name}</h2>
-                <p className="text-blue-400 font-extrabold text-lg">₹{item.price?.toLocaleString()}</p>
+                <p className="text-blue-400 font-extrabold text-lg">₹{(item.product.price || item.price)?.toLocaleString()}</p>
 
                 <div className="flex items-center justify-center sm:justify-start gap-3 pt-2">
                   <div className="flex items-center rounded-xl bg-slate-900 border border-purple-500/30 p-1">
@@ -189,4 +204,3 @@ const Cart = () => {
 };
 
 export default Cart;
-

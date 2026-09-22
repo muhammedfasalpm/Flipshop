@@ -1,71 +1,34 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
-// Create uploads folder if it doesn't exist
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
-}
-
-// Storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      `${Date.now()}${path.extname(
-        file.originalname
-      )}`
-    );
+// Configure Cloudinary Storage for Multer
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: "flipshop/products",
+      allowed_formats: ["jpg", "jpeg", "png", "webp"],
+      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+    };
   },
 });
 
-// File filter
-const checkFileType = (file, cb) => {
-  const filetypes =
-    /jpeg|jpg|png|webp|pdf|doc|docx/;
-
-  const extname = filetypes.test(
-    path.extname(
-      file.originalname
-    ).toLowerCase()
-  );
-
-  const mimetypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-
-  if (
-    extname &&
-    mimetypes.includes(file.mimetype)
-  ) {
+// File filter for allowed image mime types
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        "Only JPG, PNG, WEBP, PDF, DOC and DOCX files are allowed"
-      )
-    );
+    cb(new Error("Only JPG, JPEG, PNG, and WEBP image files are allowed"), false);
   }
 };
 
 const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    checkFileType(file, cb);
-  },
-
+  storage: storage,
+  fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 10 * 1024 * 1024, // 10MB reasonable file size limit
   },
 });
 

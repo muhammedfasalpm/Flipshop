@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { API_URL, getImageUrl } from "../services/api";
+import api, { getImageUrl } from "../services/api";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -12,38 +11,31 @@ const ProductDetails = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const userInfo = JSON.parse(
-    localStorage.getItem("userInfo") || "null"
-  );
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
 
   const getProduct = async () => {
+    setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_URL}/api/products/getone/${id}`
-      );
-
+      const res = await api.get(`/api/products/getone/${id}`);
       setProduct(res.data);
 
       if (res.data.images?.length > 0) {
         setSelectedImage(getImageUrl(res.data.images[0]));
       }
-
-      setLoading(false);
     } catch (error) {
-      console.log(error);
+      console.error("Product details fetch error:", error);
+    } finally {
       setLoading(false);
     }
   };
 
   const getProducts = async () => {
     try {
-      const res = await axios.get(
-        `${API_URL}/api/products/get`
-      );
-
-      setProducts(res.data);
+      const res = await api.get("/api/products/get", { params: { limit: 10 } });
+      const productList = res.data.products || (Array.isArray(res.data) ? res.data : []);
+      setProducts(productList);
     } catch (error) {
-      console.log(error);
+      console.error("Related products fetch error:", error);
     }
   };
 
@@ -55,30 +47,29 @@ const ProductDetails = () => {
 
   const handleAddToCart = async () => {
     try {
-      if (!userInfo) {
-        alert("Please login first");
+      if (!userInfo?._id) {
+        alert("Please login first to add items to your cart");
         navigate("/login");
         return;
       }
 
-      await axios.post(
-        `${API_URL}/api/cart/add`,
-        {
-          userId: userInfo._id,
-          productId: product._id,
-          quantity: 1,
-        }
-      );
+      await api.post("/api/cart/add", {
+        userId: userInfo._id,
+        productId: product._id,
+        quantity: 1,
+      });
 
-      alert("Added to cart");
+      alert("Added to cart successfully!");
     } catch (error) {
-      console.log(error);
+      console.error("Add to cart error:", error);
+      alert(error.response?.data?.message || "Failed to add item to cart");
     }
   };
 
   if (loading) {
     return (
-      <div className="text-center py-20 text-slate-400 font-medium">
+      <div className="flex justify-center items-center py-24 text-slate-400 font-medium">
+        <div className="w-10 h-10 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mr-3" />
         Loading product details...
       </div>
     );
@@ -95,12 +86,9 @@ const ProductDetails = () => {
   return (
     <div className="space-y-8 pb-12">
       <div className="max-w-7xl mx-auto bg-slate-800/90 p-6 sm:p-8 rounded-3xl border border-slate-700/60 shadow-xl backdrop-blur-md">
-
         <div className="grid md:grid-cols-2 gap-10">
-
           {/* Images */}
           <div>
-
             <img
               src={selectedImage || getImageUrl(product.images?.[0])}
               alt={product.name}
@@ -108,7 +96,6 @@ const ProductDetails = () => {
             />
 
             <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
-
               {product.images?.map((image, index) => (
                 <img
                   key={index}
@@ -118,14 +105,11 @@ const ProductDetails = () => {
                   className="w-20 h-20 border border-slate-700 rounded-xl cursor-pointer object-cover bg-slate-900 hover:border-purple-400 transition-all"
                 />
               ))}
-
             </div>
-
           </div>
 
           {/* Details */}
           <div className="space-y-4">
-
             <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold uppercase tracking-wider border border-purple-500/30">
               {product.category || "General"}
             </span>
@@ -153,7 +137,6 @@ const ProductDetails = () => {
             </div>
 
             <div className="flex gap-4 pt-6">
-
               <button
                 onClick={handleAddToCart}
                 className="flex-1 btn-primary-gradient py-3.5 rounded-xl text-white text-sm font-semibold shadow-lg shadow-purple-600/30"
@@ -167,34 +150,26 @@ const ProductDetails = () => {
               >
                 Buy Now
               </button>
-
             </div>
-
           </div>
-
         </div>
 
         {/* Related Products */}
         {products.length > 0 && (
           <div className="mt-14 pt-8 border-t border-slate-700/60">
-
             <h2 className="text-2xl font-bold text-white font-['Outfit'] mb-6">
               Related Products
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-
               {products
-                .filter(
-                  (item) => item._id !== product._id
-                )
+                .filter((item) => item._id !== product._id)
                 .slice(0, 4)
                 .map((item) => (
                   <div
                     key={item._id}
                     className="bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col justify-between"
                   >
-
                     <img
                       src={getImageUrl(item.images?.[0])}
                       alt={item.name}
@@ -202,7 +177,6 @@ const ProductDetails = () => {
                     />
 
                     <div className="p-4 flex-1 flex flex-col justify-between">
-
                       <div>
                         <h3 className="font-semibold text-white line-clamp-1 font-['Outfit']">
                           {item.name}
@@ -219,22 +193,15 @@ const ProductDetails = () => {
                       >
                         View Product
                       </Link>
-
                     </div>
-
                   </div>
                 ))}
-
             </div>
-
           </div>
         )}
-
       </div>
     </div>
   );
 };
 
 export default ProductDetails;
-
-
