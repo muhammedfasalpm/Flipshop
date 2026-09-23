@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { Heart } from "lucide-react";
 import api, { getImageUrl } from "../services/api";
 import { addToCartAsync } from "../store/cartSlice";
 
@@ -14,6 +15,7 @@ const ProductDetails = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [addedMessage, setAddedMessage] = useState("");
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
 
@@ -25,6 +27,19 @@ const ProductDetails = () => {
 
       if (res.data.images?.length > 0) {
         setSelectedImage(getImageUrl(res.data.images[0]));
+      }
+
+      if (userInfo?._id) {
+        try {
+          const wishRes = await api.get(`/api/wishlist/${userInfo._id}`);
+          const wishProducts = wishRes.data.products || [];
+          const inWish = wishProducts.some(
+            (p) => (p?._id || p?.id || p) === (res.data._id || res.data.id)
+          );
+          setIsWishlisted(inWish);
+        } catch (e) {
+          // ignore wishlist fetch error
+        }
       }
     } catch (error) {
       console.error("Product details fetch error:", error);
@@ -49,11 +64,42 @@ const ProductDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const toggleWishlist = async () => {
+    if (!userInfo?._id) {
+      navigate("/login");
+      return;
+    }
+
+    const productId = product?._id || product?.id;
+    if (!productId) return;
+
+    try {
+      if (isWishlisted) {
+        setIsWishlisted(false);
+        await api.delete(`/api/wishlist/remove/${productId}`, {
+          data: { userId: userInfo._id },
+        });
+      } else {
+        setIsWishlisted(true);
+        await api.post("/api/wishlist/add", {
+          userId: userInfo._id,
+          productId,
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error);
+      setIsWishlisted((prev) => !prev);
+    }
+  };
+
   const handleAddToCart = () => {
     if (!userInfo?._id) {
       navigate("/login");
       return;
     }
+
+    const productId = product?._id || product?.id;
+    if (!productId) return;
 
     dispatch(addToCartAsync({ product, quantity: 1, userId: userInfo._id }));
     setAddedMessage("Added to cart!");
@@ -136,7 +182,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-3 pt-4">
               <button
                 onClick={handleAddToCart}
                 className="flex-1 btn-primary-gradient py-3.5 rounded-xl text-white text-sm font-semibold shadow-lg shadow-purple-600/30 active:scale-95 transition-transform"
@@ -152,6 +198,18 @@ const ProductDetails = () => {
                 className="flex-1 bg-slate-900 border border-purple-500/40 text-white py-3.5 rounded-xl text-sm font-semibold hover:border-blue-400 transition-all active:scale-95"
               >
                 Buy Now
+              </button>
+
+              <button
+                onClick={toggleWishlist}
+                className={`p-3.5 rounded-xl border transition-all active:scale-95 flex items-center justify-center ${
+                  isWishlisted
+                    ? "bg-pink-500/20 border-pink-500/50 text-pink-400"
+                    : "bg-slate-900 border-slate-700 text-slate-300 hover:text-white hover:border-purple-500/40"
+                }`}
+                title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+              >
+                <Heart className={`w-5 h-5 ${isWishlisted ? "fill-pink-500 text-pink-500" : ""}`} />
               </button>
             </div>
           </div>

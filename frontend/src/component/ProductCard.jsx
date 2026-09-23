@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Star, ShoppingCart, Heart, Eye, ShieldCheck, Check } from "lucide-react";
-import { getImageUrl } from "../services/api";
+import api, { getImageUrl } from "../services/api";
 import { addToCartAsync } from "../store/cartSlice";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
@@ -11,10 +11,36 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
 
-  const toggleWishlist = (e) => {
+  const toggleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+    if (!userInfo?._id) {
+      navigate("/login");
+      return;
+    }
+
+    const productId = product?._id || product?.id;
+    if (!productId) return;
+
+    try {
+      if (isWishlisted) {
+        setIsWishlisted(false);
+        await api.delete(`/api/wishlist/remove/${productId}`, {
+          data: { userId: userInfo._id },
+        });
+      } else {
+        setIsWishlisted(true);
+        await api.post("/api/wishlist/add", {
+          userId: userInfo._id,
+          productId,
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error);
+      setIsWishlisted((prev) => !prev);
+    }
   };
 
   const handleAddToCart = async (e) => {

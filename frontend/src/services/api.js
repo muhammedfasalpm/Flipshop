@@ -1,7 +1,8 @@
 import axios from "axios";
 
 // Central API Base URL Configuration (Strips trailing slashes and trailing /api to prevent duplication)
-const RAW_API_URL = import.meta.env.VITE_API_URL || "https://flipshop-mjz2.onrender.com";
+const DEFAULT_API_URL = import.meta.env.DEV ? "http://localhost:5000" : "https://flipshop-mjz2.onrender.com";
+const RAW_API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
 export const API_URL = RAW_API_URL.replace(/\/$/, "").replace(/\/api$/, "");
 
 // Create Centralized Axios Instance with Auto Token Header Injection

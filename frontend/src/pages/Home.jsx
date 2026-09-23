@@ -16,7 +16,7 @@ const Home = () => {
     setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
-        api.get("/api/products/get", { params: { limit: 50 } }),
+        api.get("/api/products/get", { params: { limit: 16 } }),
         getCategories(),
       ]);
 

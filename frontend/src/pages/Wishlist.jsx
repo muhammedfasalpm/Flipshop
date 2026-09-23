@@ -71,7 +71,9 @@ const Wishlist = () => {
     );
   }
 
-  const validWishlistProducts = wishlist.filter((product) => product !== null && product?._id);
+  const validWishlistProducts = wishlist.filter(
+    (product) => product !== null && (product?._id || product?.id)
+  );
 
   return (
     <div className="space-y-8 pb-12">
@@ -101,48 +103,51 @@ const Wishlist = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {validWishlistProducts.map((product) => (
-            <div
-              key={product._id}
-              className="bg-slate-800/90 rounded-3xl border border-slate-700/60 p-5 flex flex-col justify-between backdrop-blur-md shadow-xl"
-            >
-              <div className="space-y-3">
-                <div className="relative w-full h-56 rounded-2xl overflow-hidden bg-slate-900 border border-slate-700/50">
-                  <img
-                    src={getImageUrl(product.images?.[0])}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
+          {validWishlistProducts.map((product) => {
+            const productId = product._id || product.id;
+            return (
+              <div
+                key={productId}
+                className="bg-slate-800/90 rounded-3xl border border-slate-700/60 p-5 flex flex-col justify-between backdrop-blur-md shadow-xl"
+              >
+                <div className="space-y-3">
+                  <div className="relative w-full h-56 rounded-2xl overflow-hidden bg-slate-900 border border-slate-700/50">
+                    <img
+                      src={getImageUrl(product.images?.[0])}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <h2 className="text-base font-bold text-white line-clamp-1 font-['Outfit']">
+                    {product.name}
+                  </h2>
+
+                  <p className="text-blue-400 font-extrabold text-lg">
+                    ₹{product.price?.toLocaleString()}
+                  </p>
                 </div>
 
-                <h2 className="text-base font-bold text-white line-clamp-1 font-['Outfit']">
-                  {product.name}
-                </h2>
+                <div className="flex gap-3 pt-4 border-t border-slate-700/60 mt-4">
+                  <button
+                    onClick={() => addToCart(product)}
+                    className="flex-1 btn-primary-gradient py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 active:scale-95 transition-transform"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    <span>Add To Cart</span>
+                  </button>
 
-                <p className="text-blue-400 font-extrabold text-lg">
-                  ₹{product.price?.toLocaleString()}
-                </p>
+                  <button
+                    onClick={() => removeFromWishlist(productId)}
+                    className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs font-semibold flex items-center justify-center cursor-pointer"
+                    title="Remove from Wishlist"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-
-              <div className="flex gap-3 pt-4 border-t border-slate-700/60 mt-4">
-                <button
-                  onClick={() => addToCart(product)}
-                  className="flex-1 btn-primary-gradient py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 active:scale-95 transition-transform"
-                >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  <span>Add To Cart</span>
-                </button>
-
-                <button
-                  onClick={() => removeFromWishlist(product._id)}
-                  className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs font-semibold flex items-center justify-center"
-                  title="Remove from Wishlist"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
