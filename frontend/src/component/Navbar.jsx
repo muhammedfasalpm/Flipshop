@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { 
   ShoppingBag, 
   Search, 
@@ -16,12 +17,16 @@ import {
   Package
 } from "lucide-react";
 import gsap from "gsap";
+import { selectCartItemCount, resetHydration } from "../store/cartSlice";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const cartItemCount = useSelector(selectCartItemCount);
 
   const drawerRef = useRef(null);
   const backdropRef = useRef(null);
@@ -72,9 +77,9 @@ const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   const handleLogout = () => {
+    dispatch(resetHydration());
     localStorage.removeItem("userInfo");
     navigate("/login");
-    window.location.reload();
   };
 
   const handleSearchSubmit = (e) => {
@@ -145,11 +150,13 @@ const Navbar = () => {
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
+              const isCart = link.path === "/cart";
+
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 relative ${
                     isActive(link.path)
                       ? "bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-white border border-purple-500/40 shadow-sm"
                       : "text-slate-300 hover:text-white hover:bg-slate-800/50"
@@ -157,6 +164,11 @@ const Navbar = () => {
                 >
                   {Icon && <Icon className={`w-3.5 h-3.5 ${isActive(link.path) ? "text-purple-400" : "text-slate-400"}`} />}
                   <span>{link.name}</span>
+                  {isCart && cartItemCount > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-full shadow-sm animate-pulse">
+                      {cartItemCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -308,20 +320,28 @@ const Navbar = () => {
             {navLinks.map((link) => {
               const Icon = link.icon;
               const active = isActive(link.path);
+              const isCart = link.path === "/cart";
 
               return (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
                     active
                       ? "bg-gradient-to-r from-blue-600/40 to-purple-600/40 text-white border border-purple-500/50 font-bold shadow-md"
                       : "text-slate-300 hover:bg-slate-800/60 hover:text-white border border-transparent"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${active ? "text-purple-400" : "text-slate-400"}`} />
-                  <span>{link.name}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-4 h-4 ${active ? "text-purple-400" : "text-slate-400"}`} />
+                    <span>{link.name}</span>
+                  </div>
+                  {isCart && cartItemCount > 0 && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-full shadow-sm">
+                      {cartItemCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}

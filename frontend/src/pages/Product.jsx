@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../component/ProductCard";
 import { Search, PackageX, Sparkles, LayoutGrid, List, X, Tag, Filter, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
-import api from "../services/api";
+import api, { getCategories } from "../services/api";
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,6 +11,7 @@ const Products = () => {
   const selectedCategory = searchParams.get("category") || "All";
 
   const [search, setSearch] = useState(() => searchQuery);
+  const [debouncedSearch, setDebouncedSearch] = useState(() => searchQuery);
   const [category, setCategory] = useState(() => selectedCategory);
   const [sort, setSort] = useState("");
   const [page, setPage] = useState(1);
@@ -24,39 +25,66 @@ const Products = () => {
 
   const categoryPillList = ["All", ...categories.map((c) => (typeof c === "string" ? c : c.name))];
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/api/products/get", {
-        params: {
-          search: search || undefined,
-          category: category !== "All" ? category : undefined,
-          sort: sort || undefined,
-          page,
-          limit,
-        },
-      });
+  // 300ms Debounce for Search Input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
 
-      if (res.data && res.data.products) {
-        setProducts(res.data.products);
-        setPagination(res.data.pagination || { page, limit, total: res.data.products.length, totalPages: 1 });
-      } else if (Array.isArray(res.data)) {
-        setProducts(res.data);
-        setPagination({ page: 1, limit: res.data.length, total: res.data.length, totalPages: 1 });
-      } else {
-        setProducts([]);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Fetch products with Anti-Race-Condition Guard
+  useEffect(() => {
+    let isCurrent = true;
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/api/products/get", {
+          params: {
+            search: debouncedSearch || undefined,
+            category: category !== "All" ? category : undefined,
+            sort: sort || undefined,
+            page,
+            limit,
+          },
+        });
+
+        if (isCurrent) {
+          if (res.data && res.data.products) {
+            setProducts(res.data.products);
+            setPagination(res.data.pagination || { page, limit, total: res.data.products.length, totalPages: 1 });
+          } else if (Array.isArray(res.data)) {
+            setProducts(res.data);
+            setPagination({ page: 1, limit: res.data.length, total: res.data.length, totalPages: 1 });
+          } else {
+            setProducts([]);
+          }
+        }
+      } catch (error) {
+        if (isCurrent) {
+          console.error("Error fetching products from API:", error);
+          setProducts([]);
+        }
+      } finally {
+        if (isCurrent) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      console.error("Error fetching products from API:", error);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchProducts();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [debouncedSearch, category, sort, page]);
 
   const fetchCategories = async () => {
     try {
-      const res = await api.get("/api/categories/get");
+      const res = await getCategories();
       if (Array.isArray(res.data)) {
         setCategories(res.data);
       } else if (res.data && Array.isArray(res.data.categories)) {
@@ -73,14 +101,8 @@ const Products = () => {
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, category, sort, page]);
-
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1);
   };
 
   const handleCategoryChange = (newCategory) => {
@@ -95,6 +117,7 @@ const Products = () => {
 
   const clearAllFilters = () => {
     setSearch("");
+    setDebouncedSearch("");
     setCategory("All");
     setSort("");
     setPage(1);

@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import api, { getImageUrl } from "../services/api";
+import { addToCartAsync } from "../store/cartSlice";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [product, setProduct] = useState(null);
   const [products, setProducts] = useState([]);
   const [selectedImage, setSelectedImage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [addedMessage, setAddedMessage] = useState("");
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
 
@@ -45,25 +49,15 @@ const ProductDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const handleAddToCart = async () => {
-    try {
-      if (!userInfo?._id) {
-        alert("Please login first to add items to your cart");
-        navigate("/login");
-        return;
-      }
-
-      await api.post("/api/cart/add", {
-        userId: userInfo._id,
-        productId: product._id,
-        quantity: 1,
-      });
-
-      alert("Added to cart successfully!");
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      alert(error.response?.data?.message || "Failed to add item to cart");
+  const handleAddToCart = () => {
+    if (!userInfo?._id) {
+      navigate("/login");
+      return;
     }
+
+    dispatch(addToCartAsync({ product, quantity: 1, userId: userInfo._id }));
+    setAddedMessage("Added to cart!");
+    setTimeout(() => setAddedMessage(""), 2000);
   };
 
   if (loading) {
@@ -136,17 +130,26 @@ const ProductDetails = () => {
               </p>
             </div>
 
-            <div className="flex gap-4 pt-6">
+            {addedMessage && (
+              <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold text-center animate-fade-in">
+                ✓ {addedMessage}
+              </div>
+            )}
+
+            <div className="flex gap-4 pt-4">
               <button
                 onClick={handleAddToCart}
-                className="flex-1 btn-primary-gradient py-3.5 rounded-xl text-white text-sm font-semibold shadow-lg shadow-purple-600/30"
+                className="flex-1 btn-primary-gradient py-3.5 rounded-xl text-white text-sm font-semibold shadow-lg shadow-purple-600/30 active:scale-95 transition-transform"
               >
                 Add To Cart
               </button>
 
               <button
-                onClick={handleAddToCart}
-                className="flex-1 bg-slate-900 border border-purple-500/40 text-white py-3.5 rounded-xl text-sm font-semibold hover:border-blue-400 transition-all"
+                onClick={() => {
+                  handleAddToCart();
+                  navigate("/cart");
+                }}
+                className="flex-1 bg-slate-900 border border-purple-500/40 text-white py-3.5 rounded-xl text-sm font-semibold hover:border-blue-400 transition-all active:scale-95"
               >
                 Buy Now
               </button>

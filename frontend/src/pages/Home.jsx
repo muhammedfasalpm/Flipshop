@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, ArrowRight, Flame } from "lucide-react";
-import api from "../services/api";
+import api, { getCategories } from "../services/api";
 
 import HeroSlider from "../component/HeroBanner";
 import CategorySection from "../component/CategorySection";
@@ -17,7 +17,7 @@ const Home = () => {
     try {
       const [prodRes, catRes] = await Promise.all([
         api.get("/api/products/get", { params: { limit: 50 } }),
-        api.get("/api/categories/get"),
+        getCategories(),
       ]);
 
       const productList = prodRes.data.products || (Array.isArray(prodRes.data) ? prodRes.data : []);

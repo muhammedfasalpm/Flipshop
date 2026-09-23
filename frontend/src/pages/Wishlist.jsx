@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Heart, ShoppingCart, Trash2, ArrowRight } from "lucide-react";
 import api, { getImageUrl } from "../services/api";
+import { addToCartAsync } from "../store/cartSlice";
 
 const Wishlist = () => {
+  const dispatch = useDispatch();
   const [wishlist, setWishlist] = useState([]);
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
@@ -48,19 +51,9 @@ const Wishlist = () => {
     }
   };
 
-  const addToCart = async (productId) => {
-    if (!productId) return;
-    try {
-      await api.post("/api/cart/add", {
-        userId: userInfo._id,
-        productId,
-        quantity: 1,
-      });
-      alert("Added to cart");
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      alert(error.response?.data?.message || "Failed to add product to cart");
-    }
+  const addToCart = (product) => {
+    if (!product || !userInfo?._id) return;
+    dispatch(addToCartAsync({ product, quantity: 1, userId: userInfo._id }));
   };
 
   if (!userInfo) {
@@ -133,8 +126,8 @@ const Wishlist = () => {
 
               <div className="flex gap-3 pt-4 border-t border-slate-700/60 mt-4">
                 <button
-                  onClick={() => addToCart(product._id)}
-                  className="flex-1 btn-primary-gradient py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20"
+                  onClick={() => addToCart(product)}
+                  className="flex-1 btn-primary-gradient py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 active:scale-95 transition-transform"
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
                   <span>Add To Cart</span>

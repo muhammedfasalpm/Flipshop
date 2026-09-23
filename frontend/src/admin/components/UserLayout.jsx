@@ -1,8 +1,21 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import Navbar from "../../component/Navbar";
 import Footer from "../../component/Footer";
+import { fetchCart } from "../../store/cartSlice";
 
 function UserLayout() {
+  const dispatch = useDispatch();
+  const hydrated = useSelector((state) => state.cart.hydrated);
+
+  useEffect(() => {
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+    if (userInfo?._id && !hydrated) {
+      dispatch(fetchCart(userInfo._id));
+    }
+  }, [dispatch, hydrated]);
+
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col relative overflow-hidden selection:bg-purple-600 selection:text-white">
       {/* Background Ambient Glows */}

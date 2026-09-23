@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { CreditCard, CheckCircle2, MapPin, Truck, Tag, X, Sparkles, Loader2 } from "lucide-react";
 import api from "../services/api";
+import { fetchCart, clearCart } from "../store/cartSlice";
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
 
-  const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { items, totalAmount, hydrated, loading } = useSelector(
+    (state) => state.cart
+  );
   const [submitting, setSubmitting] = useState(false);
 
   // Coupon state
@@ -27,29 +31,11 @@ const Checkout = () => {
     pincode: "",
   });
 
-  const getCart = async () => {
-    if (!userInfo?._id) {
-      setLoading(false);
-      return;
-    }
-    try {
-      const res = await api.get(`/api/cart/${userInfo._id}`);
-      setCart(res.data);
-    } catch (error) {
-      console.error("Error fetching cart for checkout:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (userInfo?._id) {
-      getCart();
-    } else {
-      setLoading(false);
+    if (userInfo?._id && !hydrated) {
+      dispatch(fetchCart(userInfo._id));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userInfo?._id, hydrated, dispatch]);
 
   const handleChange = (e) => {
     setAddress({
@@ -71,7 +57,7 @@ const Checkout = () => {
     setCouponSuccessMsg("");
 
     try {
-      const cartTotal = cart?.totalPrice || 0;
+      const cartTotal = totalAmount || 0;
       const res = await api.post("/api/coupons/validate", {
         code,
         cartTotal,
@@ -106,7 +92,9 @@ const Checkout = () => {
       return;
     }
 
-    const validItems = (cart?.items || []).filter((item) => item && item.product);
+    const validItems = (items || []).filter(
+      (item) => item && item.product && (item.product._id || typeof item.product === "string")
+    );
 
     if (validItems.length === 0) {
       alert("Your cart is empty or products are no longer available.");
@@ -115,14 +103,14 @@ const Checkout = () => {
 
     setSubmitting(true);
     try {
-      const subtotal = cart?.totalPrice || 0;
+      const subtotal = totalAmount || 0;
       const discount = appliedCoupon ? appliedCoupon.discount : 0;
       const finalPrice = Math.max(0, subtotal - discount);
 
       await api.post("/api/orders/add", {
         user: userInfo._id,
         items: validItems.map((item) => ({
-          product: item.product._id,
+          product: item.product._id || item.product,
           quantity: item.quantity,
           price: item.product.price || item.price,
         })),
@@ -133,6 +121,7 @@ const Checkout = () => {
         couponDiscount: discount,
       });
 
+      dispatch(clearCart());
       alert("Order placed successfully!");
       navigate("/orders");
     } catch (error) {
@@ -151,8 +140,10 @@ const Checkout = () => {
     );
   }
 
-  const validCartItems = (cart?.items || []).filter((item) => item && item.product);
-  const subtotal = cart?.totalPrice || 0;
+  const validCartItems = (items || []).filter(
+    (item) => item && item.product && (item.product._id || typeof item.product === "string")
+  );
+  const subtotal = totalAmount || 0;
   const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
   const finalPayable = Math.max(0, subtotal - discountAmount);
 

@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Star, ShoppingCart, Heart, Eye, ShieldCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { Star, ShoppingCart, Heart, Eye, ShieldCheck, Check } from "lucide-react";
 import { getImageUrl } from "../services/api";
+import { addToCartAsync } from "../store/cartSlice";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [addedFeedback, setAddedFeedback] = useState(false);
 
   const toggleWishlist = (e) => {
     e.preventDefault();
@@ -12,10 +17,31 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     setIsWishlisted(!isWishlisted);
   };
 
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Cart addition logic
+  const handleAddToCart = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+    if (!userInfo?._id) {
+      navigate("/login");
+      return;
+    }
+
+    const productId = product?._id || product?.id;
+    if (!productId) {
+      console.error("ProductCard: Invalid product object passed to handleAddToCart", product);
+      return;
+    }
+
+    try {
+      await dispatch(addToCartAsync({ product, quantity: 1, userId: userInfo._id })).unwrap();
+      setAddedFeedback(true);
+      setTimeout(() => setAddedFeedback(false), 1500);
+    } catch (err) {
+      console.error("Failed to add item to cart from ProductCard:", err);
+    }
   };
 
   const imageUrl = getImageUrl(product?.images?.[0]);
@@ -46,6 +72,8 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
             <img
               src={imageUrl}
               alt={product.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-xl"
             />
           </Link>
@@ -134,6 +162,8 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           <img
             src={imageUrl}
             alt={product.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out opacity-90 group-hover:opacity-100 rounded-xl"
           />
         </Link>
@@ -177,10 +207,23 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
 
           <button
             onClick={handleAddToCart}
-            className="btn-primary-gradient px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-purple-600/20 active:scale-95 transition-transform"
+            className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md transition-all active:scale-95 ${
+              addedFeedback
+                ? "bg-emerald-600 text-white shadow-emerald-600/30"
+                : "btn-primary-gradient shadow-purple-600/20"
+            }`}
           >
-            <ShoppingCart className="w-3.5 h-3.5 text-white" />
-            <span>Add</span>
+            {addedFeedback ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-white" />
+                <span>Added</span>
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="w-3.5 h-3.5 text-white" />
+                <span>Add</span>
+              </>
+            )}
           </button>
         </div>
 
