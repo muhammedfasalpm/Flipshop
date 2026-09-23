@@ -58,10 +58,6 @@ app.use(
   })
 );
 
-import mongoose from "mongoose";
-import User from "./models/User.js";
-import Product from "./models/Product.js";
-
 // Health Check Endpoint
 app.get("/", (req, res) => {
   res.json({
@@ -69,28 +65,6 @@ app.get("/", (req, res) => {
     message: "Flipshop REST API Server is running",
     timestamp: new Date().toISOString(),
   });
-});
-
-// Safe Production Diagnostic Endpoint
-app.get("/api/diagnostic", async (req, res) => {
-  try {
-    const userCount = await User.countDocuments({});
-    const productCount = await Product.countDocuments({});
-    const adminUser = await User.findOne({
-      $or: [{ email: "fasal@gmail.com" }, { phone: "8129691138" }],
-    });
-    res.json({
-      success: true,
-      host: mongoose.connection.host || "NOT CONNECTED",
-      databaseName: mongoose.connection.name || "NONE",
-      userCount,
-      productCount,
-      adminStatus: adminUser ? "FOUND" : "NOT FOUND",
-      adminRole: adminUser ? adminUser.role : "NONE",
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
 });
 
 // API Routes
