@@ -10,8 +10,8 @@ const connectDB = async () => {
   }
 
   try {
-    const conn = await mongoose.connect(mongoUri);
-    console.log(`MongoDB Connected Successfully: ${conn.connection.host}`);
+    const conn = await mongoose.connect(mongoUri, { dbName: "flipshop" });
+    console.log(`MongoDB Connected Successfully: ${conn.connection.host}/${conn.connection.name}`);
   } catch (error) {
     console.error(`MongoDB Connection Error: ${error.message}`);
     process.exit(1);
